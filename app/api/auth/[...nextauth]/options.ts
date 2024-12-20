@@ -92,7 +92,7 @@ export const authOptions: NextAuthOptions = {
           image: profile.avatar ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png` : null,
           username, // Füge den bereinigten Benutzernamen hinzu
           role: "user",
-          credits: 0 // Add default credits
+          credits: 250 // Add default credits
         };
       },
     }),
@@ -109,7 +109,7 @@ export const authOptions: NextAuthOptions = {
           image: profile.picture,
           username, // Füge den bereinigten Benutzernamen hinzu
           role: "user",
-          credits: 0 // Add default credits
+          credits: 250 // Add default credits
         };
       },
     }),
@@ -128,15 +128,16 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, token, user }) {
       if (session?.user) {
-        session.user.id = parseInt(token.sub as string); // Konvertiere token.sub zu number
+        session.user.id = parseInt(token.sub as string);
         const currentUser = await prisma.user.findUnique({
-          where: { id: session.user.id }, // Verwende session.user.id direkt
+          where: { id: session.user.id },
         });
         if (currentUser) {
           session.user.username = currentUser.username || null;
           session.user.email = currentUser.email || null;
           session.user.image = currentUser.image || undefined;
           session.user.role = currentUser.role || "user";
+          session.user.credits = currentUser.credits || 0;
         }
       }
       return session;

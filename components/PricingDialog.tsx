@@ -8,6 +8,10 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
+import { loadStripe } from '@stripe/stripe-js';
+import { useToast } from "@/components/hooks/use-toast";
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface PricingDialogProps {
   open: boolean
@@ -15,10 +19,47 @@ interface PricingDialogProps {
 }
 
 export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
-  const handlePurchase = (plan: string) => {
-    // TODO: Implement purchase logic
-    console.log(`Purchasing ${plan} plan`)
-  }
+  const { toast } = useToast();
+
+  const handlePurchase = async (plan: string) => {
+    try {
+      const stripe = await stripePromise;
+      if (!stripe) throw new Error('Stripe failed to initialize');
+
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ plan }),
+      });
+
+      const data = await response.json();
+      
+      if (!data.sessionId) {
+        throw new Error('No session ID received from server');
+      }
+
+      const result = await stripe.redirectToCheckout({
+        sessionId: data.sessionId,
+      });
+
+      if (result.error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error.message,
+        });
+      }
+    } catch (error) {
+      console.error('Purchase error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to initiate purchase. Please try again.",
+      });
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

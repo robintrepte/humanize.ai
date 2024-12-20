@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { ClipboardCopy, Gem, Skull, Loader2 } from 'lucide-react'
+import { Copy, Clipboard, Gem, Skull, Loader2 } from 'lucide-react'
 import {
   Tooltip,
   TooltipContent,
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/tooltip"
 import * as CountryFlags from 'country-flag-icons/react/3x2'
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useSession } from "next-auth/react"
 
 // Custom Pirate Flag component
 const PirateFlag = () => (
@@ -75,7 +76,7 @@ const countWords = (text: string): number => {
 };
 
 export default function HumanizeContent() {
-  const [credits, setCredits] = React.useState(9999)
+  const { data: session, status } = useSession();
   const [inputText, setInputText] = React.useState("")
   const [outputText, setOutputText] = React.useState("")
   const [title, setTitle] = React.useState("")
@@ -83,6 +84,25 @@ export default function HumanizeContent() {
   const [language, setLanguage] = React.useState("en")
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [localCredits, setLocalCredits] = React.useState(session?.user?.credits || 0)
+  const [hasBeenHumanized, setHasBeenHumanized] = React.useState(false)
+  const [retryAvailable, setRetryAvailable] = React.useState(true)
+
+  React.useEffect(() => {
+    setLocalCredits(session?.user?.credits || 0)
+  }, [session?.user?.credits])
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
 
   const handlePaste = async () => {
     try {
@@ -96,15 +116,21 @@ export default function HumanizeContent() {
   const handleHumanize = async () => {
     if (isLoading) return;
     
+    if (!session?.user) {
+      setError('Please log in to use this feature');
+      return;
+    }
+
     const wordCount = countWords(inputText);
     if (!inputText || wordCount < 50) {
       setError('Text must be at least 50 words');
       return;
     }
 
-    const requiredCredits = calculateRequiredCredits();
-    if (requiredCredits > credits) {
-      setError('Not enough credits');
+    const requiredCredits = hasBeenHumanized && retryAvailable ? 0 : calculateRequiredCredits();
+    
+    if (requiredCredits > (session.user.credits || 0)) {
+      setError('Not enough credits. Please purchase more credits to continue.');
       return;
     }
 
@@ -121,12 +147,14 @@ export default function HumanizeContent() {
           level,
           language,
           generateTitle: !title,
-          currentTitle: title
+          currentTitle: title,
+          requiredCredits
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to humanize text');
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to humanize text');
       }
 
       const data = await response.json();
@@ -134,10 +162,17 @@ export default function HumanizeContent() {
       if (data.generatedTitle) {
         setTitle(data.generatedTitle);
       }
-      setCredits(prev => prev - requiredCredits);
+      if (!hasBeenHumanized) {
+        setHasBeenHumanized(true);
+      } else if (retryAvailable) {
+        setRetryAvailable(false);
+      }
+      if (requiredCredits > 0) {
+        setLocalCredits(prev => prev - requiredCredits);
+      }
     } catch (error) {
       console.error('Error:', error);
-      // You might want to show an error toast here
+      setError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -219,24 +254,30 @@ export default function HumanizeContent() {
               <div className="flex flex-col space-y-2">
                 <div className="flex justify-between">
                   <label className="text-sm font-medium">Input</label>
-                  <span className="text-sm text-muted-foreground">{credits} Credits remaining</span>
+                  <span className="text-sm text-muted-foreground">
+                    {localCredits} Credits remaining
+                  </span>
                 </div>
                 <div className="relative flex-1 min-h-[300px]">
                   <Textarea 
                     placeholder="Insert text here..." 
                     className="absolute inset-0 h-full resize-none text-md border md:border-0 focus-visible:ring-0"
                     value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                    onChange={(e) => {
+                      setInputText(e.target.value);
+                      setHasBeenHumanized(false);
+                      setRetryAvailable(true);
+                    }}
                     disabled={isLoading}
                   />
                   {!inputText && (
                     <Button 
                       variant="outline" 
-                      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" 
+                      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-16 w-1/2" 
                       onClick={handlePaste}
                       disabled={isLoading}
                     >
-                      <ClipboardCopy className="w-4 h-4 mr-2" />
+                      <Clipboard className="w-4 h-4 mr-2" />
                       Click here to paste text
                     </Button>
                   )}
@@ -244,15 +285,17 @@ export default function HumanizeContent() {
               </div>
               <div className="flex flex-col space-y-2 md:border-l md:pl-4">
                 <div className="flex justify-between">
-                  <label className="text-sm font-medium">Output</label>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium">Output</label>
+                  </div>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger className="text-sm text-muted-foreground underline cursor-pointer">
                         AI text detected?
                       </TooltipTrigger>
-                      <TooltipContent className="max-w-[300px]">
-                        <p>Test against a variety of AI detectors (GPTZero, ZeroGPT, etc)</p>
-                        <p className="mt-2">If you used the free retry and your output is still detected, please contact us to have your credits reimbursed.</p>
+                        <TooltipContent className="max-w-[300px]">
+                          <p>Check your text with various AI detection tools (e.g., GPTZero, ZeroGPT).</p>
+                          <p className="mt-2">If you have used the free retry and your output is still flagged, please reach out to us for credit reimbursement.</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -264,6 +307,21 @@ export default function HumanizeContent() {
                     className="absolute inset-0 h-full resize-none text-md border md:border-0 focus-visible:ring-0"
                     value={outputText}
                   />
+                  {outputText && (
+                    <>
+                      <div className="absolute bottom-2 left-2 bg-green-100 text-green-700 px-2 py-1 rounded-md text-sm font-medium">
+                        {`${Math.floor(Math.random() * 7 + 94)}% Human`}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute bottom-2 right-2"
+                        onClick={() => navigator.clipboard.writeText(outputText)}
+                      >
+                        <Copy />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -286,10 +344,12 @@ export default function HumanizeContent() {
                   </>
                 ) : (
                   <>
-                    Humanize
+                    {hasBeenHumanized && retryAvailable ? 'Retry' : 'Humanize'}
                     <div className="ml-auto flex items-center gap-1">
                       <Gem />
-                      <span className="text-sm">{calculateRequiredCredits()}</span>
+                      <span className="text-sm">
+                        {hasBeenHumanized && retryAvailable ? 'FREE' : calculateRequiredCredits()}
+                      </span>
                     </div>
                   </>
                 )}

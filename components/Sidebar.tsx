@@ -165,28 +165,28 @@ export function Sidebar() {
                               <AvatarImage src={session.user?.image || "/default-avatar.png"} alt="Profile" />
                               <AvatarFallback>{session.user?.username?.[0] || "U"}</AvatarFallback>
                             </Avatar>
-                            {!isCollapsed && <span className="text-sm">{session.user?.username || "User"}</span>}
+                            {!isCollapsed && <span className="text-md font-medium text-base">{session.user?.username || "User"}</span>}
                           </div>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuContent align="end" side="top" className="w-56">
                           <DropdownMenuItem 
-                            className="border-b cursor-pointer" 
+                            className="border-b cursor-pointer flex items-center w-full py-3 text-base" 
                             onClick={() => setShowPricingDialog(true)}
                           >
-                            <Gem className="mr-2 h-4 w-4 text-blue-500" />
+                            <Gem className="mr-3 h-5 w-5 text-blue-500" />
                             <span className="flex-1">My Credits: {session.user?.credits || 0}</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href="/profile/edit" className="w-full cursor-pointer">
-                              <Settings className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem asChild className="text-md">
+                            <Link href="/profile/edit" className="w-full cursor-pointer flex items-center py-3 text-base">
+                              <Settings className="mr-3" />
                               Edit Account
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem 
-                            className="cursor-pointer text-red-600 focus:text-red-600" 
+                            className="cursor-pointer text-red-600 focus:text-red-600 flex items-center w-full py-3 text-base" 
                             onClick={() => signOut()}
                           >
-                            <LogOut className="mr-2 h-4 w-4" />
+                            <LogOut className="mr-3" />
                             Log out
                           </DropdownMenuItem>
                         </DropdownMenuContent>

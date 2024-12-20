@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "../auth/[...nextauth]/options"
+import { PrismaClient } from '@prisma/client'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const prisma = new PrismaClient()
 
 // Add level-specific prompts
 const levelPrompts = {
@@ -76,12 +81,32 @@ async function generateTitleFromText(text: string) {
 
 export async function POST(req: Request) {
   try {
-    const { text, level, language, generateTitle, currentTitle } = await req.json();
+    const session = await getServerSession(authOptions);
     
-    // Preprocess the input text
-    const processedText = preprocessText(text);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // Generate title if needed
+    const { text, level, language, generateTitle, currentTitle, requiredCredits } = await req.json();
+    
+    // Verify user has enough credits
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    });
+
+    if (!user || user.credits < requiredCredits) {
+      return NextResponse.json({ error: 'Insufficient credits' }, { status: 400 });
+    }
+
+    // Deduct credits
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { credits: user.credits - requiredCredits }
+    });
+    
+    // Process the text
+    const processedText = preprocessText(text);
+    
     let finalTitle = currentTitle;
     if (generateTitle) {
       finalTitle = await generateTitleFromText(processedText);

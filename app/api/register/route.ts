@@ -28,6 +28,7 @@ export async function POST(req: Request) {
         username,
         email,
         password: hashedPassword,
+        credits: 250,
       },
     });
 
