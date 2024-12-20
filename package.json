@@ -1,11 +1,11 @@
 {
-  "name": "adventureai",
-  "version": "0.2.1",
+  "name": "humanizeai",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3003",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3003",
     "lint": "next lint"
   },
   "dependencies": {
@@ -25,11 +25,14 @@
     "bcrypt": "^5.1.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "country-flag-icons": "^1.5.13",
     "framer-motion": "^11.11.10",
     "lucide-react": "^0.453.0",
     "next": "^15.0.1",
     "next-auth": "^4.24.10",
+    "next-intl": "^3.5.4",
     "nodemailer": "^6.9.15",
+    "openai": "^4.77.0",
     "prisma": "^5.21.1",
     "react": "^18",
     "react-dom": "^18",

@@ -30,7 +30,6 @@ export default async function UserProfile({ params }: UserProfileProps) {
   if (!user.public && (!session?.user?.username || user.username !== session.user.username)) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header />
         <main className="flex-1 flex justify-center p-6">
           <h1>Dieses Profil ist privat.</h1>
         </main>
@@ -40,7 +39,6 @@ export default async function UserProfile({ params }: UserProfileProps) {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-1 flex items-center justify-center p-6">
         <UserProfileOverview 
           user={user} 

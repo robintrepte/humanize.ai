@@ -15,6 +15,7 @@ interface ExtendedUser {
   username: string | null;
   image: string | null;
   role: string;
+  credits: number;
 }
 
 interface UserWithPassword extends ExtendedUser {
@@ -73,7 +74,8 @@ export const authOptions: NextAuthOptions = {
           username: user.username,
           email: user.email,
           image: user.image,
-          role: user.role
+          role: user.role,
+          credits: user.credits
         };
       }
     }),
@@ -90,6 +92,7 @@ export const authOptions: NextAuthOptions = {
           image: profile.avatar ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png` : null,
           username, // Füge den bereinigten Benutzernamen hinzu
           role: "user",
+          credits: 0 // Add default credits
         };
       },
     }),
@@ -106,6 +109,7 @@ export const authOptions: NextAuthOptions = {
           image: profile.picture,
           username, // Füge den bereinigten Benutzernamen hinzu
           role: "user",
+          credits: 0 // Add default credits
         };
       },
     }),

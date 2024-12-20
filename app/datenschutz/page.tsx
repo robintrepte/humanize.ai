@@ -3,7 +3,6 @@ import { Header } from "@/components/Header";
 export default function Datenschutz() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-1 container p-6">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold mb-4">Datenschutzerklärung</h1>

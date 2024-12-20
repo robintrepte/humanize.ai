@@ -11,12 +11,10 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-md w-full space-y-6">
           <div className="space-y-2 text-center">
             <h1 className="text-3xl font-bold">Willkommen</h1>
-            <p className="text-muted-foreground">Jetzt spielen!</p>
           </div>
           <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
             {session ? (
