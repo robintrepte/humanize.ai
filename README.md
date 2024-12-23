@@ -87,13 +87,13 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
    sudo -u postgres psql
 
    # Create database
-   CREATE DATABASE humanize;
+   CREATE DATABASE humanizeai;
 
    # Create user and set password
-   CREATE USER humanize WITH ENCRYPTED PASSWORD 'your_secure_password';
+   CREATE USER humanizeai WITH ENCRYPTED PASSWORD 'your_secure_password';
 
    # Grant privileges
-   GRANT ALL PRIVILEGES ON DATABASE humanize TO humanize;
+   GRANT ALL PRIVILEGES ON DATABASE humanizeai TO humanizeai;
 
    # Exit PostgreSQL
    \q
@@ -101,7 +101,7 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
 
 3. Configure database connection in `.env`:
    ```bash
-   DATABASE_URL="postgresql://humanize:your_secure_password@localhost:5432/humanize"
+   DATABASE_URL="postgresql://humanizeai:your_secure_password@localhost:5432/humanizeai"
    ```
 
 4. Run database migrations:
