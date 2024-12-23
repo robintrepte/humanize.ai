@@ -73,6 +73,43 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
 - Nginx web server
 - PM2 process manager
 
+### Database Setup
+
+1. Install PostgreSQL if not already installed:
+   ```bash
+   sudo apt update
+   sudo apt install postgresql postgresql-contrib
+   ```
+
+2. Create a new database and user:
+   ```bash
+   # Connect to PostgreSQL as postgres user
+   sudo -u postgres psql
+
+   # Create database
+   CREATE DATABASE humanize;
+
+   # Create user and set password
+   CREATE USER humanize WITH ENCRYPTED PASSWORD 'your_secure_password';
+
+   # Grant privileges
+   GRANT ALL PRIVILEGES ON DATABASE humanize TO humanize;
+
+   # Exit PostgreSQL
+   \q
+   ```
+
+3. Configure database connection in `.env`:
+   ```bash
+   DATABASE_URL="postgresql://humanize:your_secure_password@localhost:5432/humanize"
+   ```
+
+4. Run database migrations:
+   ```bash
+   # From your project directory
+   npx prisma migrate deploy
+   ```
+
 ### Server Installation
 
 1. Connect to your server via SSH:
