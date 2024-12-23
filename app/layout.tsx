@@ -1,11 +1,9 @@
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
-import Footer from "@/components/Footer";
-import { Sidebar } from "@/components/Sidebar";
-import { Header } from "@/components/Header";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
+import LayoutWrapper from "@/components/LayoutWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,14 +21,9 @@ export default function RootLayout({
     <html lang="de">
       <body className={inter.className}>
         <SessionProviderWrapper>
-          <div className="flex md:flex-row flex-col h-screen">
-            <Sidebar />
-            <div className="flex-1 overflow-auto">
-              <main className="h-full">
-                {children}
-              </main>
-            </div>
-          </div>
+          <LayoutWrapper>
+            {children}
+          </LayoutWrapper>
         </SessionProviderWrapper>
         <Toaster />
       </body>

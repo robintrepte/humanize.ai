@@ -16,6 +16,7 @@ import {
 import * as CountryFlags from 'country-flag-icons/react/3x2'
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useSession } from "next-auth/react"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 // Custom Pirate Flag component
 const PirateFlag = () => (
@@ -75,6 +76,10 @@ const countWords = (text: string): number => {
   return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 };
 
+const countCharacters = (text: string): number => {
+  return text.length;
+};
+
 export default function HumanizeContent() {
   const { data: session, status } = useSession();
   const [inputText, setInputText] = React.useState("")
@@ -106,10 +111,32 @@ export default function HumanizeContent() {
 
   const handlePaste = async () => {
     try {
-      const text = await navigator.clipboard.readText()
-      setInputText(text)
+      // First try to request permission
+      const permissionResult = await navigator.permissions.query({
+        name: 'clipboard-read' as PermissionName
+      });
+      
+      if (permissionResult.state === 'denied') {
+        throw new Error('Permission to access clipboard was denied');
+      }
+
+      const text = await navigator.clipboard.readText();
+      setInputText(text);
     } catch (err) {
-      console.error("Error pasting:", err)
+      // Fallback to execCommand for broader browser support
+      const textarea = document.createElement('textarea');
+      document.body.appendChild(textarea);
+      textarea.focus();
+      document.execCommand('paste');
+      const text = textarea.value;
+      document.body.removeChild(textarea);
+      
+      if (text) {
+        setInputText(text);
+      } else {
+        console.error("Error pasting:", err);
+        setError('Unable to paste. Please try copying and pasting manually.');
+      }
     }
   }
 
@@ -253,23 +280,27 @@ export default function HumanizeContent() {
             <div className="grid gap-4 md:grid-cols-2 flex-1 min-h-0">
               <div className="flex flex-col space-y-2">
                 <div className="flex justify-between">
-                  <label className="text-sm font-medium">Input</label>
+                  <label className="text-sm font-medium">
+                    Input <span className="text-muted-foreground font-normal">({countCharacters(inputText)} chars, {countWords(inputText)} words)</span>
+                  </label>
                   <span className="text-sm text-muted-foreground">
                     {localCredits} Credits remaining
                   </span>
                 </div>
                 <div className="relative flex-1 min-h-[300px]">
-                  <Textarea 
-                    placeholder="Insert text here..." 
-                    className="absolute inset-0 h-full resize-none text-md border md:border-0 focus-visible:ring-0"
-                    value={inputText}
-                    onChange={(e) => {
-                      setInputText(e.target.value);
-                      setHasBeenHumanized(false);
-                      setRetryAvailable(true);
-                    }}
-                    disabled={isLoading}
-                  />
+                  <ScrollArea className="h-full absolute inset-0">
+                    <Textarea 
+                      placeholder="Insert text here..." 
+                      className="w-full min-h-[500px] border-0 focus-visible:ring-0 resize-none text-md [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+                      value={inputText}
+                      onChange={(e) => {
+                        setInputText(e.target.value);
+                        setHasBeenHumanized(false);
+                        setRetryAvailable(true);
+                      }}
+                      disabled={isLoading}
+                    />
+                  </ScrollArea>
                   {!inputText && (
                     <Button 
                       variant="outline" 
@@ -286,7 +317,9 @@ export default function HumanizeContent() {
               <div className="flex flex-col space-y-2 md:border-l md:pl-4">
                 <div className="flex justify-between">
                   <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium">Output</label>
+                    <label className="text-sm font-medium">
+                      Output <span className="text-muted-foreground font-normal">({countCharacters(outputText)} chars, {countWords(outputText)} words)</span>
+                    </label>
                   </div>
                   <TooltipProvider>
                     <Tooltip>
@@ -301,13 +334,15 @@ export default function HumanizeContent() {
                   </TooltipProvider>
                 </div>
                 <div className="relative flex-1 min-h-[300px]">
-                  <Textarea 
-                    placeholder="Your humanized text will appear here" 
-                    readOnly
-                    className="absolute inset-0 h-full resize-none text-md border md:border-0 focus-visible:ring-0"
-                    value={outputText}
-                  />
-                  {outputText && (
+                  <ScrollArea className="h-full absolute inset-0">
+                    <Textarea 
+                      placeholder="Your humanized text will appear here" 
+                      className="w-full min-h-[500px] border-0 focus-visible:ring-0 resize-none text-md [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+                      readOnly
+                      value={outputText}
+                    />
+                  </ScrollArea>
+                  {outputText && !isLoading && (
                     <>
                       <div className="absolute bottom-2 left-2 bg-green-100 text-green-700 px-2 py-1 rounded-md text-sm font-medium">
                         {`${Math.floor(Math.random() * 7 + 94)}% Human`}

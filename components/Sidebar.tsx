@@ -16,6 +16,12 @@ import {
 import { signOut } from "next-auth/react"
 import { PricingDialog } from "@/components/PricingDialog"
 import { HelpDialog } from "@/components/HelpDialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export function Sidebar() {
   const { data: session } = useSession()
@@ -95,19 +101,42 @@ export function Sidebar() {
 
             {/* Main Navigation */}
             <nav className="flex-1 p-4 space-y-4 flex flex-col items-center">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="w-full">
+                      <Button 
+                        variant="ghost" 
+                        className={`w-full h-14 text-base flex items-center ${
+                          isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
+                        }`}
+                        disabled={!session}
+                        asChild={!!session}
+                      >
+                        {session ? (
+                          <Link href="/humanize">
+                            <Sparkles className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                            {!isCollapsed && <span className="ml-4">Humanize</span>}
+                          </Link>
+                        ) : (
+                          <>
+                            <Sparkles className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                            {!isCollapsed && <span className="ml-4">Humanize</span>}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {!session && (
+                    <TooltipContent>
+                      <p>Please login to access Humanize</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+              
               {session && (
                 <>
-                  <Link href="/humanize" className="w-full">
-                    <Button 
-                      variant="ghost" 
-                      className={`w-full h-14 text-base flex items-center ${
-                        isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
-                      }`}
-                    >
-                      <Sparkles className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
-                      {!isCollapsed && <span className="ml-4">Humanize</span>}
-                    </Button>
-                  </Link>
                   {session?.user?.role === "admin" && (
                     <Link href="/admin/users" className="w-full">
                       <Button 
@@ -129,28 +158,30 @@ export function Sidebar() {
             <div className="absolute bottom-0 left-0 right-0">
               {/* Credits and Help */}
               <div className="p-4 space-y-4">
-                <Link href="/credits" className="w-full">
-                  <Button 
-                    variant="ghost" 
-                    className={`w-full h-14 text-base flex items-center text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 ${
-                      isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
-                    }`}
-                    onClick={() => setShowPricingDialog(true)}
-                  >
-                    <Gem className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
-                    {!isCollapsed && <span className="ml-4">Buy Credits</span>}
-                  </Button>
-                </Link>
-                <Button 
-                  variant="ghost" 
-                  className={`w-full h-14 text-base flex items-center ${
-                    isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
-                  }`}
-                  onClick={() => setShowHelpDialog(true)}
-                >
-                  <HelpCircle className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
-                  {!isCollapsed && <span className="ml-4">Help</span>}
-                </Button>
+                {session && (
+                  <>
+                    <Button 
+                      variant="ghost" 
+                      className={`w-full h-14 text-base flex items-center text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 ${
+                        isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
+                      }`}
+                      onClick={() => setShowPricingDialog(true)}
+                    >
+                      <Gem className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                      {!isCollapsed && <span className="ml-4">Buy Credits</span>}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      className={`w-full h-14 text-base flex items-center ${
+                        isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
+                      }`}
+                      onClick={() => setShowHelpDialog(true)}
+                    >
+                      <HelpCircle className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                      {!isCollapsed && <span className="ml-4">Help</span>}
+                    </Button>
+                  </>
+                )}
               </div>
 
               {/* Theme and Profile */}

@@ -6,7 +6,6 @@ import { Header } from "@/components/Header"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link";
-import { FaDiscord, FaGoogle } from "react-icons/fa"; // Icons importieren
 import { Eye, EyeOff } from "lucide-react"; // Fügen Sie diesen Import am Anfang der Datei hinzu
 
 export default function SignIn() {
@@ -38,13 +37,13 @@ export default function SignIn() {
       } else {
         switch (result?.error) {
           case "No user found":
-            router.push(`/register?email=${encodeURIComponent(identifier)}&password=${encodeURIComponent(password)}&error=${encodeURIComponent("Kein Benutzer gefunden. Bitte registriere dich:")}`);
+            router.push(`/register?email=${encodeURIComponent(identifier)}&password=${encodeURIComponent(password)}&error=${encodeURIComponent("No user found. Please register:")}`);
             break;
           case "CredentialsSignin":
-            setError("Benutzername/E-Mail oder Passwort ist falsch");
+            setError("Username/Email or password is incorrect");
             break;
           default:
-            setError("Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.");
+            setError("An error occurred. Please try again later.");
         }
       }
     }
@@ -59,20 +58,34 @@ export default function SignIn() {
               Login
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
-              Wähle deine bevorzugte Anmeldemethode
+              Choose your preferred login method
             </p>
           </div>
-          <div className="flex justify-center space-x-4">
-            <Button onClick={() => signIn("discord")} className="w-1/2 flex items-center justify-center bg-[#7289da] text-white">
-              <FaDiscord className="mr-2" /> Discord
-            </Button>
-            <Button onClick={() => signIn("google")} className="w-1/2 flex items-center justify-center bg-[#DB4437] text-white">
-              <FaGoogle className="mr-2" /> Google
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full py-6 text-md flex items-center justify-center gap-4"
+            onClick={() => signIn('google')}
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-12 w-12"
+              height="24" 
+              viewBox="0 0 24 24" 
+              width="24"
+              style={{ minWidth: '24px', minHeight: '24px' }}
+            >
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              <path d="M1 1h22v22H1z" fill="none"/>
+            </svg>
+            Sign in with Google
+          </Button>
           <div className="relative flex items-center">
             <div className="flex-grow border-t border-gray-300"></div>
-            <span className="flex-shrink mx-4 text-gray-500 text-sm">ODER</span>
+            <span className="flex-shrink mx-4 text-gray-500 text-sm">OR</span>
             <div className="flex-grow border-t border-gray-300"></div>
           </div>
           <form className="mt-8 space-y-6" onSubmit={handleSignIn}>
@@ -83,14 +96,14 @@ export default function SignIn() {
             )}
             <div className="space-y-4">
               <div>
-                <label htmlFor="identifier" className="sr-only">Benutzername oder E-Mail</label>
+                <label htmlFor="identifier" className="sr-only">Username or Email</label>
                 <Input
                   id="identifier"
                   name="identifier"
                   type="text"
                   autoComplete="username"
                   required
-                  placeholder="Benutzername oder E-Mail"
+                  placeholder="Username or Email"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   className="text-md"
@@ -98,7 +111,7 @@ export default function SignIn() {
               </div>
               {isPasswordLogin && (
                 <div>
-                  <label htmlFor="password" className="sr-only">Passwort</label>
+                  <label htmlFor="password" className="sr-only">Password</label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -106,7 +119,7 @@ export default function SignIn() {
                       type={showPassword ? "text" : "password"}
                       autoComplete="current-password"
                       required
-                      placeholder="Passwort"
+                      placeholder="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="text-md"
@@ -131,7 +144,7 @@ export default function SignIn() {
                 type="submit"
                 className="w-full"
               >
-                {isPasswordLogin ? "Anmelden" : "Magic Link senden"}
+                {isPasswordLogin ? "Sign In" : "Send Magic Link"}
               </Button>
             </div>
           </form>
@@ -145,12 +158,12 @@ export default function SignIn() {
           </div> */}
           <div className="text-center">
             <Link href="/register" className="text-sm text-blue-600 hover:text-blue-800">
-              Noch kein Konto? Hier registrieren
+              Don't have an account? Register here
             </Link>
           </div>
           <div className="text-center mt-4">
             <p className="text-xs text-gray-500">
-              Mit der Anmeldung stimmst du unseren <Link href="/datenschutz" className="text-blue-600 hover:text-blue-800">Datenschutzrichtlinien</Link> zu.
+              By signing in, you agree to our <Link href="/privacy" className="text-blue-600 hover:text-blue-800">Privacy Policy</Link>.
             </p>
           </div>
         </div>

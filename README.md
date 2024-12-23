@@ -6,7 +6,7 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
 
 - AI text humanization with multiple complexity levels
 - Multi-language support
-- User authentication (Email, Discord, Google)
+- User authentication (Email, Google)
 - Credit-based system
 - User profile management
 - Admin dashboard
@@ -53,8 +53,6 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
    NEXTAUTH_SECRET="your-nextauth-secret"
    NEXTAUTH_URL="http://localhost:3003"
    OPENAI_API_KEY="your-openai-api-key"
-   DISCORD_CLIENT_ID="your-discord-client-id"
-   DISCORD_CLIENT_SECRET="your-discord-client-secret"
    GOOGLE_CLIENT_ID="your-google-client-id"
    GOOGLE_CLIENT_SECRET="your-google-client-secret"
    ```

@@ -21,10 +21,6 @@ export default function Datenschutz() {
           <p className="mb-4 text-gray-400">
             Wenn Sie sich über Google anmelden, erhalten wir Zugriff auf bestimmte Informationen aus Ihrem Google-Konto, wie z.B. Ihren Namen und Ihre E-Mail-Adresse. Diese Informationen werden ausschließlich zur Authentifizierung und zur Verbesserung unserer Dienste verwendet.
           </p>
-          <h2 className="text-2xl font-bold mb-2 mt-10">Discord Login</h2>
-          <p className="mb-4 text-gray-400">
-            Bei der Anmeldung über Discord erhalten wir Zugriff auf bestimmte Informationen aus Ihrem Discord-Konto, wie z.B. Ihren Benutzernamen und Ihre E-Mail-Adresse. Diese Informationen werden ausschließlich zur Authentifizierung und zur Verbesserung unserer Dienste verwendet.
-          </p>
           <h2 className="text-2xl font-bold mb-2 mt-10">Kontakt</h2>
           <p className="mb-4 text-gray-400">
             Bei Fragen zum Datenschutz können Sie uns jederzeit unter den im Impressum angegebenen Kontaktdaten kontaktieren.

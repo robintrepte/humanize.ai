@@ -79,23 +79,6 @@ export const authOptions: NextAuthOptions = {
         };
       }
     }),
-    DiscordProvider({
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-      async profile(profile) {
-        // Generiere einen gültigen Benutzernamen
-        const username = profile.username.replace(/\s+/g, '').replace(/[^a-zA-Z0-9-_]/g, ''); // Entferne Leerzeichen und ungültige Zeichen
-        return {
-          id: profile.id,
-          name: profile.username,
-          email: profile.email,
-          image: profile.avatar ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png` : null,
-          username, // Füge den bereinigten Benutzernamen hinzu
-          role: "user",
-          credits: 250 // Add default credits
-        };
-      },
-    }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
