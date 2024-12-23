@@ -13,11 +13,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'oaidalleapiprodscus.blob.core.windows.net',
-      },
-      {
-        protocol: 'https',
-        hostname: 'play.tretu.de',
+        hostname: 'humanize.twentyfirst.media',
       },
       {
         protocol: 'https',

@@ -57,12 +57,12 @@
   "main": "test-db.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/robintrepte/pick.git"
+    "url": "git+https://github.com/robintrepte/humanize.ai.git"
   },
   "author": "Robin Trepte",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/robintrepte/pick/issues"
+    "url": "https://github.com/robintrepte/humanize.ai/issues"
   },
-  "homepage": "https://github.com/robintrepte/pick#readme"
+  "homepage": "https://github.com/robintrepte/humanize.ai#readme"
 }
