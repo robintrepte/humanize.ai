@@ -2,8 +2,9 @@ import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 
 interface AIMessage {
-  role: string;
+  role: 'system' | 'user' | 'assistant' | 'function';
   content: string;
+  name?: string;
 }
 
 interface AIClientConfig {
@@ -35,7 +36,7 @@ class AIClient {
     try {
       if (this.config.provider === 'openai') {
         const completion = await this.openai!.chat.completions.create({
-          messages: messages,
+          messages: messages as any,
           model: this.config.model,
           temperature: this.config.temperature ?? 0.7,
           max_tokens: this.config.maxTokens ?? 2000,
@@ -44,14 +45,17 @@ class AIClient {
       } else {
         const completion = await this.anthropic!.messages.create({
           messages: messages.map(m => ({
-            role: m.role === 'system' ? 'assistant' : m.role,
+            role: m.role === 'system' || m.role === 'function' ? 'assistant' : 'user',
             content: m.content,
           })),
           model: this.config.model,
           temperature: this.config.temperature ?? 0.7,
           max_tokens: this.config.maxTokens ?? 2000,
         });
-        return completion.content[0].text;
+        if (completion.content[0].type === 'text') {
+          return completion.content[0].text;
+        }
+        return '';
       }
     } catch (error) {
       console.error('AI completion error:', error);

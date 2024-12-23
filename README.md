@@ -73,7 +73,93 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
 - Nginx web server
 - PM2 process manager
 
-[Original deployment instructions remain the same...]
+### Server Installation
+
+1. Connect to your server via SSH:
+   ```bash
+   ssh user@your-server
+   ```
+
+2. Clone the repository using SSH:
+   ```bash
+   cd /var/www
+   git clone git@github.com:robintrepte/humanize.ai.git humanize.twentyfirst.media
+   cd humanize.twentyfirst.media
+   ```
+
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+4. Create and configure the `.env` file:
+   ```bash
+   cp .env.example .env
+   nano .env   # Edit with your configuration
+   ```
+
+5. Build the application:
+   ```bash
+   npm run build
+   ```
+
+6. Set up PM2 for process management:
+   ```bash
+   # Install PM2 globally if not already installed
+   npm install -g pm2
+   
+   # Start the application with PM2
+   pm2 start npm --name "humanizeai" -- start
+   
+   # Enable startup script
+   pm2 startup
+   pm2 save
+   ```
+
+7. Monitor the application:
+   ```bash
+   pm2 status
+   pm2 logs humanize-ai
+   ```
+
+8. Configure Nginx as reverse proxy (example configuration):
+   ```nginx
+   server {
+       listen 80;
+       server_name your-domain.com;
+
+       location / {
+           proxy_pass http://localhost:3003;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+   }
+   ```
+
+### Updating the Application
+
+1. Pull the latest changes:
+   ```bash
+   git pull origin main
+   ```
+
+2. Install any new dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Rebuild the application:
+   ```bash
+   npm run build
+   ```
+
+4. Restart the PM2 process:
+   ```bash
+   pm2 restart humanizeai
+   ```
 
 ## Contributing
 

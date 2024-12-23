@@ -198,7 +198,7 @@ function Pricing() {
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="text-center space-y-4 pb-6 mx-auto">
           <h2 className="text-sm text-primary font-mono font-medium tracking-wider uppercase">Pricing</h2>
-          <h3 className="mx-auto mt-4 max-w-xs text-3xl font-semibold sm:max-w-none sm:text-4xl md:text-5xl">Choose the plan that's right for you</h3>
+          <h3 className="mx-auto mt-4 max-w-xs text-3xl font-semibold sm:max-w-none sm:text-4xl md:text-5xl">Choose the plan that&apos;s right for you</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 sm:2 gap-4">
           <PricingCard
@@ -316,7 +316,7 @@ function FAQ() {
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="text-center space-y-4 pb-6 mx-auto">
           <h2 className="text-sm text-primary font-mono font-medium tracking-wider uppercase">FAQ</h2>
-          <h3 className="mx-auto mt-4 max-w-xs text-3xl font-semibold sm:max-w-none sm:text-4xl md:text-5xl">Got questions? We've got answers</h3>
+          <h3 className="mx-auto mt-4 max-w-xs text-3xl font-semibold sm:max-w-none sm:text-4xl md:text-5xl">Got questions? We&apos;ve got answers</h3>
         </div>
         <div className="mx-auto my-12 md:max-w-[800px]">
           {faqItems.map((item, index) => (
@@ -344,7 +344,7 @@ function FAQ() {
           ))}
         </div>
         <h4 className="mb-12 text-center text-sm font-medium tracking-tight text-muted-foreground">
-          Still have questions? We're here to help! Email us at <a href="mailto:support@twentyfirst.ai" className="underline hover:text-primary transition-colors">support@twentyfirst.ai</a>
+          Still have questions? We&apos;re here to help! Email us at <a href="mailto:support@twentyfirst.ai" className="underline hover:text-primary transition-colors">support@twentyfirst.ai</a>
         </h4>
       </div>
     </section>
