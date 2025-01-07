@@ -1,6 +1,6 @@
 # HumanizeAI - AI Text Humanizer
 
-HumanizeAI is a Next.js application that helps users transform AI-generated text into more natural, human-like writing. It features user authentication, credit-based usage, and multiple language support.
+HumanizeAI is a Next.js application that helps users transform AI-generated text into more natural, human-like writing. It features user authentication, saving texts, and credit-based usage.
 
 ## Features
 
