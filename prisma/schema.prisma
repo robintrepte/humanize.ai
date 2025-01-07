@@ -20,6 +20,7 @@ model User {
   accounts       Account[]
   sessions       Session[]
   public         Boolean   @default(true)
+  humanizations  Humanization[]
 }
 
 model Account {
@@ -56,4 +57,16 @@ model VerificationToken {
   expires               DateTime
 
   @@unique([identifier, token])
+}
+
+model Humanization {
+  id          Int      @id @default(autoincrement())
+  title       String?
+  inputText   String   @db.Text
+  outputText  String   @db.Text
+  language    String
+  level       String
+  createdAt   DateTime @default(now())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

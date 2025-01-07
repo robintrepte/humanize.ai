@@ -6,15 +6,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 
 interface UserProfileProps {
-  params: Promise<{
-    username: string;
-  }>;
+  params: Promise<{ username: string }>;
 }
 
 export default async function UserProfile({ params }: UserProfileProps) {
   const session = await getServerSession(authOptions);
-
   const resolvedParams = await params;
+
   if (!resolvedParams || !resolvedParams.username) {
     redirect("/");
   }

@@ -38,8 +38,8 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/humanizeai.git
-   cd humanizeai
+   git clone https://github.com/robintrepte/humanize.ai.git
+   cd humanize.ai
    ```
 
 2. Install dependencies:
@@ -94,6 +94,15 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
 
    # Grant privileges
    GRANT ALL PRIVILEGES ON DATABASE humanizeai TO humanizeai;
+
+   # Switch to the new database
+   \c humanizeai
+
+   # Grant privileges on all schemas
+   GRANT ALL ON SCHEMA public TO humanizeai;
+
+   # Grant privileges on all tables
+   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO humanizeai;
 
    # Exit PostgreSQL
    \q
@@ -197,15 +206,3 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
    ```bash
    pm2 restart humanizeai
    ```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the ISC License.

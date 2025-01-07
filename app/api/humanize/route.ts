@@ -127,7 +127,6 @@ export async function POST(req: Request) {
 
     const { text, level, language, generateTitle, currentTitle, requiredCredits } = await req.json();
     
-    // Verify user has enough credits
     const user = await prisma.user.findUnique({
       where: { id: session.user.id }
     });
@@ -142,7 +141,6 @@ export async function POST(req: Request) {
       data: { credits: user.credits - requiredCredits }
     });
     
-    // Process the text
     const processedText = preprocessText(text);
     
     let finalTitle = currentTitle;
@@ -150,16 +148,24 @@ export async function POST(req: Request) {
       finalTitle = await generateTitleFromText(processedText);
     }
 
-    const systemPrompt = ``;
+    let humanizedText = await processParagraphs(processedText, "", language);
 
-    let humanizedText = await processParagraphs(processedText, systemPrompt, language);
-
-    // Apply randomization to the output
-    humanizedText = humanizedText;
+    // Speichern der Humanisierung
+    const humanization = await prisma.humanization.create({
+      data: {
+        title: finalTitle,
+        inputText: processedText,
+        outputText: humanizedText,
+        language,
+        level,
+        userId: user.id
+      }
+    });
 
     return NextResponse.json({ 
       text: humanizedText,
-      generatedTitle: finalTitle 
+      generatedTitle: finalTitle,
+      humanizationId: humanization.id
     });
   } catch (error) {
     console.error('Error in humanize:', error);
