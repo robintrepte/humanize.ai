@@ -44,13 +44,13 @@ const preprocessText = (text: string) => {
 };
 
 // Add title generation function with limited context
-async function generateTitleFromText(text: string) {
+async function generateTitleFromText(text: string, language: string) {
   const contextText = text.split(/\s+/).slice(0, 60).join(' ');
   
   const result = await aiClient.complete([
     {
       role: "system",
-      content: "You are a title generator. Generate a short, engaging title (maximum 6 words) for the given text. The title should be descriptive and capture the main topic. Only respond with the title, nothing else. If you find that the text already has a title, return that title."
+      content: `You are a title generator. Generate a short, engaging title (maximum 6 words) for the given text in ${language}. The title should be descriptive and capture the main topic. Only respond with the title, nothing else. If you find that the text already has a title, return that title.`
     },
     { 
       role: "user", 
@@ -145,7 +145,7 @@ export async function POST(req: Request) {
     
     let finalTitle = currentTitle;
     if (generateTitle) {
-      finalTitle = await generateTitleFromText(processedText);
+      finalTitle = await generateTitleFromText(processedText, language);
     }
 
     let humanizedText = await processParagraphs(processedText, "", language);

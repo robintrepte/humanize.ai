@@ -46,7 +46,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <h3 className="text-xl font-semibold">Video walkthrough</h3>
             <div className="aspect-video w-full bg-black rounded-lg">
               <iframe
@@ -59,7 +59,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
                 allowFullScreen
               ></iframe>
             </div>
-          </div>
+          </div> */}
 
           <div className="flex justify-center pt-2">
             <Button className="w-full">

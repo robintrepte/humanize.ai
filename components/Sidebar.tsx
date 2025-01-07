@@ -116,12 +116,12 @@ export function Sidebar() {
                         {session ? (
                           <Link href="/humanize">
                             <Sparkles className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
-                            {!isCollapsed && <span className="ml-4">Humanize</span>}
+                            {!isCollapsed && <span className="ml-4">Humanize Text</span>}
                           </Link>
                         ) : (
                           <>
                             <Sparkles className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
-                            {!isCollapsed && <span className="ml-4">Humanize</span>}
+                            {!isCollapsed && <span className="ml-4">Humanize Text</span>}
                           </>
                         )}
                       </Button>

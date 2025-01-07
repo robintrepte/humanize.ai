@@ -151,7 +151,7 @@ export default function HumanizationsPage() {
         <div className="mb-6 flex flex-col sm:flex-row gap-4 w-full">
           <Input
             type="search"
-            placeholder="Suche nach Titel..."
+            placeholder="Search by title..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full sm:flex-1"
@@ -161,9 +161,9 @@ export default function HumanizationsPage() {
               <SelectValue placeholder="Sortieren nach" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Neueste zuerst</SelectItem>
-              <SelectItem value="oldest">Älteste zuerst</SelectItem>
-              <SelectItem value="title">Nach Titel</SelectItem>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="title">By title</SelectItem>
             </SelectContent>
           </Select>
         </div>
