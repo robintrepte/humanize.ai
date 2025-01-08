@@ -62,9 +62,11 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
           </div> */}
 
           <div className="flex justify-center pt-2">
-            <Button className="w-full">
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Contact Support
+            <Button className="w-full" asChild>
+              <a href="/support" target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Contact Support
+              </a>
             </Button>
           </div>
         </div>
