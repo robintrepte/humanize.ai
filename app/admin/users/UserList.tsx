@@ -10,15 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Shield, User, Code } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { User } from "lucide-react";
 
 interface User {
   id: number;
@@ -26,6 +19,7 @@ interface User {
   email: string;
   role: string;
   public: boolean;
+  credits: number;
 }
 
 export default function UserList({ users }: { users: User[] }) {
@@ -56,7 +50,6 @@ export default function UserList({ users }: { users: User[] }) {
         throw new Error('Fehler beim Aktualisieren der Rolle');
       }
 
-      // Aktualisiere die lokale Benutzerliste
       const updatedUsers = filteredUsers.map(user => 
         user.id === userId ? { ...user, role: newRole } : user
       );
@@ -66,13 +59,36 @@ export default function UserList({ users }: { users: User[] }) {
     }
   };
 
+  const handleCreditsChange = async (userId: number, newCredits: number) => {
+    try {
+      const response = await fetch('/api/admin/users/update-credits', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, credits: newCredits }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error updating credits');
+      }
+
+      const updatedUsers = filteredUsers.map(user =>
+        user.id === userId ? { ...user, credits: newCredits } : user
+      );
+      setFilteredUsers(updatedUsers);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Input
         placeholder="Suche nach Benutzername oder E-Mail..."
         value={searchTerm}
         onChange={(e) => handleSearch(e.target.value)}
-        className="max-w-sm"
+        className="w-full"
       />
       <Table>
         <TableHeader>
@@ -81,8 +97,7 @@ export default function UserList({ users }: { users: User[] }) {
             <TableHead>Benutzername</TableHead>
             <TableHead>E-Mail</TableHead>
             <TableHead>Rolle</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Aktionen</TableHead>
+            <TableHead>Credits</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -96,69 +111,26 @@ export default function UserList({ users }: { users: User[] }) {
               </TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>
-                <Badge 
-                  style={{
-                    backgroundColor: user.role === "admin" ? '#dc3545' :
-                                    user.role === "dev" ? '#007bff' :
-                                    user.role === "player" ? '#28a745' :
-                                    undefined,
-                    color: 'white'
-                  }}
+                <Select
+                  value={user.role}
+                  onValueChange={(value) => handleRoleChange(user.id, value)}
                 >
-                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                </Badge>
+                  <SelectTrigger className="bg-transparent border-none">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                  </SelectContent>
+                </Select>
               </TableCell>
               <TableCell>
-                <Badge variant={user.public ? "secondary" : "destructive"}>
-                  {user.public ? "Öffentlich" : "Privat"}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {user.role === "player" && (
-                      <>
-                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, "admin")}>
-                          <Shield className="mr-2 h-4 w-4" />
-                          Zum Admin machen
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, "dev")}>
-                          <Code className="mr-2 h-4 w-4" />
-                          Zum Dev machen
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    {user.role === "dev" && (
-                      <>
-                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, "admin")}>
-                          <Shield className="mr-2 h-4 w-4" />
-                          Zum Admin machen
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, "player")}>
-                          <User className="mr-2 h-4 w-4" />
-                          Zum Player machen
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    {user.role === "admin" && (
-                      <>
-                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, "dev")}>
-                          <Code className="mr-2 h-4 w-4" />
-                          Zum Dev machen
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, "player")}>
-                          <User className="mr-2 h-4 w-4" />
-                          Zum Player machen
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Input
+                  type="number"
+                  value={user.credits}
+                  onChange={(e) => handleCreditsChange(user.id, parseInt(e.target.value))}
+                  className="bg-transparent border-none w-full"
+                />
               </TableCell>
             </TableRow>
           ))}
