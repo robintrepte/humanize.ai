@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Sparkles, Home, Users, Moon, Sun, Menu, X, ChevronLeft, ChevronRight, Gem, HelpCircle, Wallet, Settings, LogOut, BookmarkIcon } from "lucide-react"
+import { Sparkles, Home, Users, Moon, Sun, Menu, X, ChevronLeft, ChevronRight, Gem, HelpCircle, Wallet, Settings, LogOut, BookmarkIcon, Shield } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -134,7 +134,42 @@ export function Sidebar() {
                   )}
                 </Tooltip>
               </TooltipProvider>
-              
+
+              {/* Add Detector Navigation Item */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="w-full">
+                      <Button 
+                        variant="ghost" 
+                        className={`w-full h-14 text-base flex items-center ${
+                          isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
+                        }`}
+                        disabled={!session}
+                        asChild={!!session}
+                      >
+                        {session ? (
+                          <Link href="/detector">
+                            <Shield className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                            {!isCollapsed && <span className="ml-4">AI Detector</span>}
+                          </Link>
+                        ) : (
+                          <>
+                            <Shield className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                            {!isCollapsed && <span className="ml-4">AI Detector</span>}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {!session && (
+                    <TooltipContent>
+                      <p>Please login to access AI Detector</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+
               {session && (
                 <>
                   <Link href="/saved" className="w-full">
