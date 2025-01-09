@@ -1,46 +1,77 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import Stripe from 'stripe';
+import { createMollieClient } from '@mollie/api-client';
 import prisma from '@/lib/prisma';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
-});
+const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY! });
 
 export async function POST(req: Request) {
-  const body = await req.text();
-  const signature = (await headers()).get('stripe-signature')!;
-
   try {
-    const event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
+    const body = await req.text();
+    const headersList = await headers();
+    const signature = headersList.get('mollie-signature');
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const userId = parseInt(session.metadata?.userId || '0');
-      const credits = parseInt(session.metadata?.credits || '0');
+    if (!signature) {
+      return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
+    }
 
-      if (userId && credits) {
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            credits: {
-              increment: credits
+    const paymentId = body;
+    const payment = await mollieClient.payments.get(paymentId);
+
+    interface PaymentMetadata {
+      userId: string;
+      planId: string;
+      credits: string;
+    }
+
+    if (payment.status === 'paid') {
+      const metadata = payment.metadata as PaymentMetadata;
+      const userId = parseInt(metadata.userId);
+      const planId = parseInt(metadata.planId);
+      const credits = parseInt(metadata.credits);
+
+      console.log('Parsed payment metadata:', { userId, planId, credits });
+
+      if (userId && planId && credits) {
+        try {
+          const nextMonth = new Date();
+          nextMonth.setMonth(nextMonth.getMonth() + 1);
+          
+          const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: {
+              credits: {
+                increment: credits
+              },
+              planId: planId,
+              subscriptionStatus: 'active',
+              currentPeriodEnd: nextMonth,
             }
+          });
+
+          console.log('User updated:', updatedUser);
+
+          if (payment.subscriptionId) {
+            const subscriptionUpdate = await prisma.user.update({
+              where: { id: userId },
+              data: {
+                subscriptionId: payment.subscriptionId
+              }
+            });
+            console.log('Subscription ID updated:', subscriptionUpdate);
           }
-        });
+        } catch (error) {
+          console.error('Error updating user:', error);
+          throw error; // Re-throw to be caught by outer try-catch
+        }
+      } else {
+        console.error('Invalid metadata values:', { userId, planId, credits });
       }
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    return NextResponse.json(
-      { error: 'Webhook handler failed' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 

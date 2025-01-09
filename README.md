@@ -185,6 +185,53 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
    }
    ```
 
+### Cron Job Setup for Credit Refills
+
+1. Make the refill script executable:
+   ```bash
+   chmod +x scripts/refill-credits.ts
+   ```
+
+2. Compile the TypeScript script:
+   ```bash
+   # From your project directory
+   npx tsc scripts/refill-credits.ts --outDir dist
+   ```
+
+3. Test the script manually:
+   ```bash
+   node dist/refill-credits.js
+   ```
+
+4. Set up the cron job to run monthly:
+   ```bash
+   # Open crontab editor
+   crontab -e
+   
+   # Add this line to run at midnight on the first day of each month
+   0 0 1 * * /usr/bin/node /var/www/humanize.twentyfirst.media/dist/refill-credits.js >> /var/www/humanize.twentyfirst.media/logs/cron.log 2>&1
+   ```
+
+5. Create the logs directory:
+   ```bash
+   mkdir -p /var/www/humanize.twentyfirst.media/logs
+   ```
+
+6. Monitor the cron job:
+   ```bash
+   # View cron logs
+   tail -f /var/www/humanize.twentyfirst.media/logs/cron.log
+   
+   # Check cron status
+   systemctl status cron
+   ```
+
+7. To update the script:
+   ```bash
+   # Recompile the TypeScript
+   npx tsc scripts/refill-credits.ts --outDir dist
+   ```
+
 ### Updating the Application
 
 1. Pull the latest changes:

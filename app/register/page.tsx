@@ -45,9 +45,22 @@ export default function Register() {
     });
 
     if (response.ok) {
-      router.push("/login");
+      // After successful registration, automatically sign in
+      const result = await signIn("credentials", {
+        identifier: email,
+        password: password,
+        redirect: false,
+      });
+
+      if (result?.ok) {
+        router.push("/humanize");
+      } else {
+        console.error("Auto-login failed after registration");
+        router.push("/login");
+      }
     } else {
-      console.error("Registration error");
+      const data = await response.json();
+      setError(data.error || "Registration failed");
     }
   };
 

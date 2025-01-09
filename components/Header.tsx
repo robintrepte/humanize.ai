@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { useEffect, useState } from "react"
-import { Sparkles, Moon, Sun, Menu, X, Loader2 } from "lucide-react"
+import { Sparkles, Moon, Sun, Menu, X, Loader2, Gem } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 export function Header() {
@@ -92,6 +92,12 @@ export function Header() {
                   <DropdownMenuItem>
                     <Link href="/admin/users" className="flex items-center gap-2" prefetch={false}>
                       <span>Benutzer</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/admin/plans" className="flex items-center gap-2" prefetch={false}>
+                      <Gem className="h-4 w-4" />
+                      <span>Tarife</span>
                     </Link>
                   </DropdownMenuItem>
                 </>
@@ -192,6 +198,12 @@ export function Header() {
                           <DropdownMenuItem>
                             <Link href="/admin/users" className="flex items-center gap-2" prefetch={false}>
                               <span>Benutzer</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Link href="/admin/plans" className="flex items-center gap-2" prefetch={false}>
+                              <Gem className="h-4 w-4" />
+                              <span>Tarife</span>
                             </Link>
                           </DropdownMenuItem>
                         </>

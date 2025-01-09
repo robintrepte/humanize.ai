@@ -197,6 +197,18 @@ export function Sidebar() {
                       </Button>
                     </Link>
                   )}
+
+                  <Link href="/admin/plans" className="w-full">
+                    <Button 
+                      variant="ghost" 
+                      className={`w-full h-14 text-base flex items-center ${
+                        isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
+                      }`}
+                    >
+                      <Gem className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                      {!isCollapsed && <span className="ml-4">Tarife</span>}
+                    </Button>
+                  </Link>
                 </>
               )}
             </nav>

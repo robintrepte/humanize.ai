@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -20,11 +20,33 @@ interface User {
   role: string;
   public: boolean;
   credits: number;
+  planId: number | null;
+  plan: {
+    id: number;
+    name: string;
+  } | null;
 }
 
 export default function UserList({ users }: { users: User[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState(users);
+  const [plans, setPlans] = useState<{ id: number; name: string; }[]>([]);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await fetch('/api/admin/plans');
+        const data = await response.json();
+        if (data.plans) {
+          setPlans(data.plans);
+        }
+      } catch (error) {
+        console.error('Error fetching plans:', error);
+      }
+    };
+
+    fetchPlans();
+  }, []);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -82,6 +104,29 @@ export default function UserList({ users }: { users: User[] }) {
     }
   };
 
+  const handlePlanChange = async (userId: number, newPlanId: number | null) => {
+    try {
+      const response = await fetch('/api/admin/users/update-plan', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, planId: newPlanId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error updating plan');
+      }
+
+      const updatedUsers = filteredUsers.map(user =>
+        user.id === userId ? { ...user, planId: newPlanId } : user
+      );
+      setFilteredUsers(updatedUsers);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Input
@@ -97,6 +142,7 @@ export default function UserList({ users }: { users: User[] }) {
             <TableHead>Benutzername</TableHead>
             <TableHead>E-Mail</TableHead>
             <TableHead>Rolle</TableHead>
+            <TableHead>Plan</TableHead>
             <TableHead>Credits</TableHead>
           </TableRow>
         </TableHeader>
@@ -121,6 +167,26 @@ export default function UserList({ users }: { users: User[] }) {
                   <SelectContent>
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="user">User</SelectItem>
+                  </SelectContent>
+                </Select>
+              </TableCell>
+              <TableCell>
+                <Select
+                  value={user.planId?.toString() || "none"}
+                  onValueChange={(value) => handlePlanChange(user.id, value === "none" ? null : parseInt(value))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue>
+                      {user.plan?.name || "No plan"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No plan</SelectItem>
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id.toString()}>
+                        {plan.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </TableCell>

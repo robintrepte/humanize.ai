@@ -21,6 +21,11 @@ model User {
   sessions       Session[]
   public         Boolean   @default(true)
   humanizations  Humanization[]
+  subscriptionId String?   @unique
+  subscriptionStatus String? // 'active', 'canceled', 'expired'
+  currentPeriodEnd DateTime?
+  plan           Plan?     @relation(fields: [planId], references: [id])
+  planId         Int?
 }
 
 model Account {
@@ -69,4 +74,18 @@ model Humanization {
   createdAt   DateTime @default(now())
   userId      Int
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Plan {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Float
+  credits     Int
+  description String
+  features    String[]
+  isPopular   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
 }
