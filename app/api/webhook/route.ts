@@ -12,11 +12,32 @@ export async function POST(req: Request) {
     const signature = headersList.get('mollie-signature');
 
     if (!signature) {
+      await prisma.webhookLog.create({
+        data: {
+          type: 'payment',
+          status: 'error',
+          payload: body,
+          error: 'Missing signature'
+        }
+      });
       return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
     }
 
     const paymentId = body;
     const payment = await mollieClient.payments.get(paymentId);
+
+    // Log the webhook request
+    await prisma.webhookLog.create({
+      data: {
+        type: payment.subscriptionId ? 'subscription' : 'payment',
+        status: 'success',
+        payload: JSON.stringify({
+          paymentId,
+          status: payment.status,
+          metadata: payment.metadata
+        })
+      }
+    });
 
     interface PaymentMetadata {
       userId: string;
@@ -71,6 +92,16 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
+    // Log the error
+    await prisma.webhookLog.create({
+      data: {
+        type: 'payment',
+        status: 'error',
+        payload: req.body ? await req.text() : '',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    });
+
     console.error('Webhook error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

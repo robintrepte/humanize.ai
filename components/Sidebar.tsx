@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Sparkles, Home, Users, Moon, Sun, Menu, X, ChevronLeft, ChevronRight, Gem, HelpCircle, Wallet, Settings, LogOut, BookmarkIcon, Shield } from "lucide-react"
+import { Sparkles, Home, Users, Moon, Sun, Menu, X, ChevronLeft, ChevronRight, Gem, HelpCircle, Wallet, Settings, LogOut, BookmarkIcon, Shield, History } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -183,32 +183,6 @@ export function Sidebar() {
                       {!isCollapsed && <span className="ml-4">Saved Texts</span>}
                     </Button>
                   </Link>
-                  
-                  {session?.user?.role === "admin" && (
-                    <Link href="/admin/users" className="w-full">
-                      <Button 
-                        variant="ghost" 
-                        className={`w-full h-14 text-base flex items-center ${
-                          isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
-                        }`}
-                      >
-                        <Users className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
-                        {!isCollapsed && <span className="ml-4">Benutzer</span>}
-                      </Button>
-                    </Link>
-                  )}
-
-                  <Link href="/admin/plans" className="w-full">
-                    <Button 
-                      variant="ghost" 
-                      className={`w-full h-14 text-base flex items-center ${
-                        isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
-                      }`}
-                    >
-                      <Gem className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
-                      {!isCollapsed && <span className="ml-4">Tarife</span>}
-                    </Button>
-                  </Link>
                 </>
               )}
             </nav>
@@ -239,6 +213,48 @@ export function Sidebar() {
                       <HelpCircle className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
                       {!isCollapsed && <span className="ml-4">Help</span>}
                     </Button>
+
+                    {/* Admin Menu */}
+                    {session.user?.role === "admin" && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            className={`w-full h-14 text-base flex items-center ${
+                              isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
+                            }`}
+                          >
+                            <Settings className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                            {!isCollapsed && (
+                              <div className="ml-4 flex items-center justify-between flex-1">
+                                <span>Admin</span>
+                                <ChevronRight className="h-4 w-4" />
+                              </div>
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent side="right" align="start" className="w-56">
+                          <DropdownMenuItem asChild>
+                            <Link href="/admin/users" className="flex items-center">
+                              <Users className="mr-2 h-4 w-4" />
+                              <span>Users</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/admin/plans" className="flex items-center">
+                              <Gem className="mr-2 h-4 w-4" />
+                              <span>Plans</span>
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href="/admin/webhooks" className="flex items-center">
+                              <History className="mr-2 h-4 w-4" />
+                              <span>Webhook Logs</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </>
                 )}
               </div>
