@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     if (!signature) {
       await prisma.webhookLog.create({
         data: {
-          type: 'payment',
+          type: 'subscription',
           status: 'error',
           payload: body,
           error: 'Missing signature'
@@ -23,86 +23,99 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
     }
 
-    const paymentId = body;
-    const payment = await mollieClient.payments.get(paymentId);
+    // Handle both payment and subscription webhooks
+    let type: 'payment' | 'subscription';
+    let status: string;
+    let metadata: any;
 
-    // Log the webhook request
+    if (body.startsWith('sub_')) {
+      // Subscription webhook
+      const [subscriptionId, customerId] = body.split(',');
+      const subscription = await mollieClient.customerSubscriptions.get(subscriptionId, { customerId });
+      type = 'subscription';
+      status = subscription?.status;
+      metadata = subscription?.metadata;
+
+      await handleSubscriptionWebhook(subscription);
+    } else {
+      // Payment webhook
+      const payment = await mollieClient.payments.get(body);
+      type = 'payment';
+      status = payment?.status;
+      metadata = payment?.metadata;
+
+      if (payment?.subscriptionId) {
+        await handleSubscriptionPayment(payment);
+      }
+    }
+
+    // Log the webhook
     await prisma.webhookLog.create({
       data: {
-        type: payment.subscriptionId ? 'subscription' : 'payment',
+        type,
         status: 'success',
-        payload: JSON.stringify({
-          paymentId,
-          status: payment.status,
-          metadata: payment.metadata
-        })
+        payload: JSON.stringify({ id: body, status, metadata })
       }
     });
-
-    interface PaymentMetadata {
-      userId: string;
-      planId: string;
-      credits: string;
-    }
-
-    if (payment.status === 'paid') {
-      const metadata = payment.metadata as PaymentMetadata;
-      const userId = parseInt(metadata.userId);
-      const planId = parseInt(metadata.planId);
-      const credits = parseInt(metadata.credits);
-
-      console.log('Parsed payment metadata:', { userId, planId, credits });
-
-      if (userId && planId && credits) {
-        try {
-          const nextMonth = new Date();
-          nextMonth.setMonth(nextMonth.getMonth() + 1);
-          
-          const updatedUser = await prisma.user.update({
-            where: { id: userId },
-            data: {
-              credits: {
-                increment: credits
-              },
-              planId: planId,
-              subscriptionStatus: 'active',
-              currentPeriodEnd: nextMonth,
-            }
-          });
-
-          console.log('User updated:', updatedUser);
-
-          if (payment.subscriptionId) {
-            const subscriptionUpdate = await prisma.user.update({
-              where: { id: userId },
-              data: {
-                subscriptionId: payment.subscriptionId
-              }
-            });
-            console.log('Subscription ID updated:', subscriptionUpdate);
-          }
-        } catch (error) {
-          console.error('Error updating user:', error);
-          throw error; // Re-throw to be caught by outer try-catch
-        }
-      } else {
-        console.error('Invalid metadata values:', { userId, planId, credits });
-      }
-    }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    // Log the error
+    console.error('Webhook error:', error);
     await prisma.webhookLog.create({
       data: {
-        type: 'payment',
+        type: 'webhook',
         status: 'error',
-        payload: req.body ? await req.text() : '',
+        payload: await req.text(),
         error: error instanceof Error ? error.message : 'Unknown error'
       }
     });
-
-    console.error('Webhook error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+async function handleSubscriptionWebhook(subscription: any) {
+  const metadata = subscription.metadata;
+  const userId = parseInt(metadata.userId);
+
+  switch (subscription.status) {
+    case 'active':
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          subscriptionStatus: 'active',
+          subscriptionId: subscription.id,
+          currentPeriodEnd: new Date(subscription.nextPaymentDate)
+        }
+      });
+      break;
+    case 'canceled':
+    case 'suspended':
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          subscriptionStatus: subscription.status
+        }
+      });
+      break;
+  }
+}
+
+async function handleSubscriptionPayment(payment: any) {
+  if (payment.status === 'paid') {
+    const metadata = payment.metadata;
+    const userId = parseInt(metadata.userId);
+    const credits = parseInt(metadata.credits);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        credits: { increment: credits },
+        currentPeriodEnd: new Date(
+          new Date(payment.paidAt).setMonth(
+            new Date(payment.paidAt).getMonth() + 1
+          )
+        )
+      }
+    });
   }
 } 

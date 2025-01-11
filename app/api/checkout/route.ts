@@ -20,7 +20,6 @@ export async function POST(req: Request) {
 
     const { plan: planName } = await req.json();
 
-    // Fetch plan from database
     const plan = await prisma.plan.findFirst({
       where: {
         name: { equals: planName, mode: 'insensitive' },
@@ -35,7 +34,6 @@ export async function POST(req: Request) {
     // Create or retrieve customer
     let customer;
     try {
-      // Try to find existing customer
       const customersPage = await mollieClient.customers.page();
       customer = customersPage.find(c => 
         c.metadata && (c.metadata as CustomerMetadata).userId === session.user.id.toString()
@@ -45,7 +43,6 @@ export async function POST(req: Request) {
     }
 
     if (!customer) {
-      // Create new customer if not found
       customer = await mollieClient.customers.create({
         name: session.user.username || session.user.email || 'Unknown',
         email: session.user.email!,
@@ -53,25 +50,49 @@ export async function POST(req: Request) {
       });
     }
 
-    // Create first payment for mandate
+    // Create first payment
     const payment = await mollieClient.payments.create({
       customerId: customer.id,
       amount: {
         currency: 'USD',
         value: plan.price.toFixed(2)
       },
-      description: `${plan.name} Subscription - First Payment`,
-      redirectUrl: `${process.env.NEXTAUTH_URL}/credits?success=true`,
-      cancelUrl: `${process.env.NEXTAUTH_URL}/credits?canceled=true`,
+      description: `${plan.name} Monthly Subscription - First Payment`,
       metadata: {
         userId: session.user.id.toString(),
         planId: plan.id.toString(),
-        credits: plan.credits.toString(),
-        isFirstPayment: true
+        credits: plan.credits.toString()
       },
-      sequenceType: 'first' as SequenceType
+      webhookUrl: `${process.env.NEXTAUTH_URL}/api/webhook`,
+      redirectUrl: `${process.env.NEXTAUTH_URL}/credits?success=true`,
+      sequenceType: SequenceType.first
     });
 
+    // Create subscription (will start after first payment is successful)
+    const subscription = await mollieClient.customerSubscriptions.create({
+      customerId: customer.id,
+      amount: {
+        currency: 'USD',
+        value: plan.price.toFixed(2)
+      },
+      interval: '1 month',
+      description: `${plan.name} Monthly Subscription`,
+      metadata: {
+        userId: session.user.id.toString(),
+        planId: plan.id.toString(),
+        credits: plan.credits.toString()
+      },
+      webhookUrl: `${process.env.NEXTAUTH_URL}/api/webhook`
+    });
+
+    // Store subscription ID in payment metadata for webhook handling
+    await mollieClient.payments.update(payment.id, {
+      metadata: {
+        ...(payment.metadata || {}),
+        subscriptionId: subscription.id
+      }
+    });
+    
     return NextResponse.json({ checkoutUrl: payment.getCheckoutUrl() });
   } catch (error) {
     console.error('Mollie checkout error:', error);
