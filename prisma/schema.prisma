@@ -91,14 +91,20 @@ model Plan {
 }
 
 model WebhookLog {
-  id        Int      @id @default(autoincrement())
-  type      String   // 'payment' | 'subscription'
-  status    String   // 'success' | 'error'
-  payload   String   @db.Text
-  error     String?  @db.Text
-  createdAt DateTime @default(now())
+  id               Int      @id @default(autoincrement())
+  type             String   // 'payment' | 'subscription'
+  status           String   // 'success' | 'error'
+  payload          String   @db.Text
+  error            String?  @db.Text
+  requestHeaders   String?
+  requestBody      String?
+  responseStatus   Int?
+  responseBody     String?
+  processingTimeMs Int?
+  createdAt        DateTime @default(now())
 
   @@index([createdAt])
   @@index([type])
   @@index([status])
+  @@index([responseStatus])
 }

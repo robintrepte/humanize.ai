@@ -26,6 +26,11 @@ interface WebhookLog {
   status: string;
   payload: string;
   error: string | null;
+  requestHeaders: string | null;
+  requestBody: string | null;
+  responseStatus: number | null;
+  responseBody: string | null;
+  processingTimeMs: number | null;
   createdAt: Date;
 }
 
@@ -82,8 +87,9 @@ export default function WebhookList({ logs: initialLogs }: WebhookListProps) {
             <TableHead>Date</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Payload</TableHead>
-            <TableHead>Error</TableHead>
+            <TableHead>Response</TableHead>
+            <TableHead>Processing Time</TableHead>
+            <TableHead>Details</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

@@ -6,18 +6,27 @@ import prisma from '@/lib/prisma';
 const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY! });
 
 export async function POST(req: Request) {
+  const startTime = Date.now();
+  const headersList = await headers();
+  const requestHeaders = Object.fromEntries(headersList.entries());
+  
   try {
     const body = await req.text();
-    const headersList = await headers();
     const signature = headersList.get('mollie-signature');
 
     if (!signature) {
+      const endTime = Date.now();
       await prisma.webhookLog.create({
         data: {
           type: 'subscription',
           status: 'error',
           payload: body,
-          error: 'Missing signature'
+          error: 'Missing signature',
+          requestHeaders: JSON.stringify(requestHeaders),
+          requestBody: body,
+          responseStatus: 400,
+          responseBody: JSON.stringify({ error: 'Missing signature' }),
+          processingTimeMs: endTime - startTime
         }
       });
       return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
@@ -27,6 +36,7 @@ export async function POST(req: Request) {
     let type: 'payment' | 'subscription';
     let status: string;
     let metadata: any;
+    let responseBody: any;
 
     if (body.startsWith('sub_')) {
       // Subscription webhook
@@ -35,6 +45,7 @@ export async function POST(req: Request) {
       type = 'subscription';
       status = subscription?.status;
       metadata = subscription?.metadata;
+      responseBody = subscription;
 
       await handleSubscriptionWebhook(subscription);
     } else {
@@ -43,32 +54,48 @@ export async function POST(req: Request) {
       type = 'payment';
       status = payment?.status;
       metadata = payment?.metadata;
+      responseBody = payment;
 
       if (payment?.subscriptionId) {
         await handleSubscriptionPayment(payment);
       }
     }
 
-    // Log the webhook
+    const endTime = Date.now();
+    
+    // Log the webhook with enhanced information
     await prisma.webhookLog.create({
       data: {
         type,
         status: 'success',
-        payload: JSON.stringify({ id: body, status, metadata })
+        payload: JSON.stringify({ id: body, status, metadata }),
+        requestHeaders: JSON.stringify(requestHeaders),
+        requestBody: body,
+        responseStatus: 200,
+        responseBody: JSON.stringify(responseBody),
+        processingTimeMs: endTime - startTime
       }
     });
 
     return NextResponse.json({ received: true });
   } catch (error) {
+    const endTime = Date.now();
     console.error('Webhook error:', error);
+    
     await prisma.webhookLog.create({
       data: {
         type: 'webhook',
         status: 'error',
         payload: await req.text(),
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        requestHeaders: JSON.stringify(requestHeaders),
+        requestBody: await req.text(),
+        responseStatus: 500,
+        responseBody: JSON.stringify({ error: 'Internal server error' }),
+        processingTimeMs: endTime - startTime
       }
     });
+    
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
