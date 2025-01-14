@@ -61,36 +61,12 @@ export async function POST(req: Request) {
       metadata: {
         userId: session.user.id.toString(),
         planId: plan.id.toString(),
-        credits: plan.credits.toString()
+        credits: plan.credits.toString(),
+        isFirstPayment: true
       },
       webhookUrl: `${process.env.NEXTAUTH_URL}/api/webhook`,
       redirectUrl: `${process.env.NEXTAUTH_URL}/credits?success=true`,
       sequenceType: SequenceType.first
-    });
-
-    // Create subscription (will start after first payment is successful)
-    const subscription = await mollieClient.customerSubscriptions.create({
-      customerId: customer.id,
-      amount: {
-        currency: 'USD',
-        value: plan.price.toFixed(2)
-      },
-      interval: '1 month',
-      description: `${plan.name} Monthly Subscription`,
-      metadata: {
-        userId: session.user.id.toString(),
-        planId: plan.id.toString(),
-        credits: plan.credits.toString()
-      },
-      webhookUrl: `${process.env.NEXTAUTH_URL}/api/webhook`
-    });
-
-    // Store subscription ID in payment metadata for webhook handling
-    await mollieClient.payments.update(payment.id, {
-      metadata: {
-        ...(payment.metadata || {}),
-        subscriptionId: subscription.id
-      }
     });
     
     return NextResponse.json({ checkoutUrl: payment.getCheckoutUrl() });

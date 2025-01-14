@@ -119,7 +119,46 @@ async function handleSubscriptionWebhook(subscription: any) {
 }
 
 async function handleSubscriptionPayment(payment: any) {
-  if (payment.status === 'paid') {
+  if (payment.status === 'paid' && payment.metadata?.isFirstPayment) {
+    const metadata = payment.metadata;
+    const userId = parseInt(metadata.userId);
+    const credits = parseInt(metadata.credits);
+    const planId = parseInt(metadata.planId);
+
+    // Create subscription after first payment
+    const subscription = await mollieClient.customerSubscriptions.create({
+      customerId: payment.customerId,
+      amount: {
+        currency: 'USD',
+        value: payment.amount.value
+      },
+      interval: '1 month',
+      description: `${payment.description.replace(' - First Payment', '')}`,
+      metadata: {
+        userId: metadata.userId,
+        planId: metadata.planId,
+        credits: metadata.credits
+      },
+      webhookUrl: `${process.env.NEXTAUTH_URL}/api/webhook`
+    });
+
+    // Update user with subscription details
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        credits: { increment: credits },
+        subscriptionId: subscription.id,
+        subscriptionStatus: 'active',
+        planId: planId,
+        currentPeriodEnd: new Date(
+          new Date(payment.paidAt).setMonth(
+            new Date(payment.paidAt).getMonth() + 1
+          )
+        )
+      }
+    });
+  } else if (payment.status === 'paid') {
+    // Handle regular subscription payments
     const metadata = payment.metadata;
     const userId = parseInt(metadata.userId);
     const credits = parseInt(metadata.credits);
