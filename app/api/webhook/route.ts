@@ -9,7 +9,8 @@ export async function POST(req: Request) {
   const startTime = Date.now();
   const headersList = await headers();
   const requestHeaders = Object.fromEntries(headersList.entries());
-  const bodyText = await req.text();
+  const formData = await req.formData();
+  const bodyText = formData.get('id')?.toString() || '';
   
   try {
     // Handle both payment and subscription webhooks
