@@ -9,19 +9,18 @@ export async function POST(req: Request) {
   const startTime = Date.now();
   const headersList = await headers();
   const requestHeaders = Object.fromEntries(headersList.entries());
+  const bodyText = await req.text();
   
   try {
-    const body = await req.text();
-
     // Handle both payment and subscription webhooks
     let type: 'payment' | 'subscription';
     let status: string;
     let metadata: any;
     let responseBody: any;
 
-    if (body.startsWith('sub_')) {
+    if (bodyText.startsWith('sub_')) {
       // Subscription webhook
-      const [subscriptionId, customerId] = body.split(',');
+      const [subscriptionId, customerId] = bodyText.split(',');
       const subscription = await mollieClient.customerSubscriptions.get(subscriptionId, { customerId });
       
       if (!subscription) {
@@ -36,7 +35,7 @@ export async function POST(req: Request) {
       await handleSubscriptionWebhook(subscription);
     } else {
       // Payment webhook
-      const payment = await mollieClient.payments.get(body);
+      const payment = await mollieClient.payments.get(bodyText);
       
       if (!payment) {
         throw new Error('Invalid payment ID');
@@ -59,9 +58,9 @@ export async function POST(req: Request) {
       data: {
         type,
         status: 'success',
-        payload: JSON.stringify({ id: body, status, metadata }),
+        payload: JSON.stringify({ id: bodyText, status, metadata }),
         requestHeaders: JSON.stringify(requestHeaders),
-        requestBody: body,
+        requestBody: bodyText,
         responseStatus: 200,
         responseBody: JSON.stringify(responseBody),
         processingTimeMs: endTime - startTime
@@ -77,10 +76,10 @@ export async function POST(req: Request) {
       data: {
         type: 'webhook',
         status: 'error',
-        payload: await req.text(),
+        payload: bodyText || '',
         error: error instanceof Error ? error.message : 'Unknown error',
         requestHeaders: JSON.stringify(requestHeaders),
-        requestBody: await req.text(),
+        requestBody: bodyText || '',
         responseStatus: 500,
         responseBody: JSON.stringify({ error: 'Internal server error' }),
         processingTimeMs: endTime - startTime
