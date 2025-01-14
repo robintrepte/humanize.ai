@@ -12,25 +12,6 @@ export async function POST(req: Request) {
   
   try {
     const body = await req.text();
-    const signature = headersList.get('mollie-signature');
-
-    if (!signature) {
-      const endTime = Date.now();
-      await prisma.webhookLog.create({
-        data: {
-          type: 'subscription',
-          status: 'error',
-          payload: body,
-          error: 'Missing signature',
-          requestHeaders: JSON.stringify(requestHeaders),
-          requestBody: body,
-          responseStatus: 400,
-          responseBody: JSON.stringify({ error: 'Missing signature' }),
-          processingTimeMs: endTime - startTime
-        }
-      });
-      return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
-    }
 
     // Handle both payment and subscription webhooks
     let type: 'payment' | 'subscription';
@@ -42,6 +23,11 @@ export async function POST(req: Request) {
       // Subscription webhook
       const [subscriptionId, customerId] = body.split(',');
       const subscription = await mollieClient.customerSubscriptions.get(subscriptionId, { customerId });
+      
+      if (!subscription) {
+        throw new Error('Invalid subscription ID');
+      }
+
       type = 'subscription';
       status = subscription?.status;
       metadata = subscription?.metadata;
@@ -51,6 +37,11 @@ export async function POST(req: Request) {
     } else {
       // Payment webhook
       const payment = await mollieClient.payments.get(body);
+      
+      if (!payment) {
+        throw new Error('Invalid payment ID');
+      }
+
       type = 'payment';
       status = payment?.status;
       metadata = payment?.metadata;
@@ -63,7 +54,7 @@ export async function POST(req: Request) {
 
     const endTime = Date.now();
     
-    // Log the webhook with enhanced information
+    // Log the webhook
     await prisma.webhookLog.create({
       data: {
         type,
