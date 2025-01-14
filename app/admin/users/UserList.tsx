@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface User {
   id: number;
@@ -127,6 +128,29 @@ export default function UserList({ users }: { users: User[] }) {
     }
   };
 
+  const handleResetSubscription = async (userId: number) => {
+    try {
+      const response = await fetch('/api/admin/users/reset-subscriptions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error resetting subscription');
+      }
+
+      const updatedUsers = filteredUsers.map(user =>
+        user.id === userId ? { ...user, planId: null, plan: null } : user
+      );
+      setFilteredUsers(updatedUsers);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Input
@@ -171,24 +195,34 @@ export default function UserList({ users }: { users: User[] }) {
                 </Select>
               </TableCell>
               <TableCell>
-                <Select
-                  value={user.planId?.toString() || "none"}
-                  onValueChange={(value) => handlePlanChange(user.id, value === "none" ? null : parseInt(value))}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue>
-                      {user.plan?.name || "No plan"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No plan</SelectItem>
-                    {plans.map((plan) => (
-                      <SelectItem key={plan.id} value={plan.id.toString()}>
-                        {plan.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={user.planId?.toString() || "none"}
+                    onValueChange={(value) => handlePlanChange(user.id, value === "none" ? null : parseInt(value))}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue>
+                        {user.plan?.name || "No plan"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No plan</SelectItem>
+                      {plans.map((plan) => (
+                        <SelectItem key={plan.id} value={plan.id.toString()}>
+                          {plan.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleResetSubscription(user.id)}
+                    className="whitespace-nowrap"
+                  >
+                    Reset Sub
+                  </Button>
+                </div>
               </TableCell>
               <TableCell>
                 <Input
