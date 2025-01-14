@@ -47,7 +47,8 @@ export async function POST(req: Request) {
       metadata = payment?.metadata;
       responseBody = payment;
 
-      if (payment?.subscriptionId) {
+      // Process any paid payment
+      if (payment.status === 'paid') {
         await handleSubscriptionPayment(payment);
       }
     }
