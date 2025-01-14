@@ -22,6 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useRouter } from "next/navigation"
 
 export function Sidebar() {
   const { data: session } = useSession()
@@ -31,6 +32,7 @@ export function Sidebar() {
   const [showPricingDialog, setShowPricingDialog] = useState(false)
   const [showHelpDialog, setShowHelpDialog] = useState(false)
   const [isClient, setIsClient] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     setIsClient(true)
@@ -198,10 +200,37 @@ export function Sidebar() {
                       className={`w-full h-14 text-base flex items-center text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 ${
                         isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
                       }`}
-                      onClick={() => setShowPricingDialog(true)}
+                      onClick={() => {
+                        console.log('Session user:', session?.user);
+                        console.log('Subscription status:', session?.user?.subscriptionStatus);
+                        console.log('Current period end:', session?.user?.currentPeriodEnd);
+                        console.log('Is date valid:', session?.user?.currentPeriodEnd && 
+                          new Date(session.user.currentPeriodEnd) > new Date());
+
+                        const hasActiveSubscription = session?.user?.subscriptionStatus === 'active' && 
+                          session?.user?.currentPeriodEnd && 
+                          new Date(session.user.currentPeriodEnd) > new Date();
+                          
+                        if (hasActiveSubscription) {
+                          router.push('/subscription');
+                        } else {
+                          setShowPricingDialog(true);
+                        }
+                      }}
                     >
-                      <Gem className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
-                      {!isCollapsed && <span className="ml-4">Buy Credits</span>}
+                      {session?.user?.subscriptionStatus === 'active' && 
+                       session?.user?.currentPeriodEnd && 
+                       new Date(session.user.currentPeriodEnd) > new Date() ? (
+                        <>
+                          <Settings className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                          {!isCollapsed && <span className="ml-4">Manage Subscription</span>}
+                        </>
+                      ) : (
+                        <>
+                          <Gem className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                          {!isCollapsed && <span className="ml-4">Buy Credits</span>}
+                        </>
+                      )}
                     </Button>
                     <Button 
                       variant="ghost" 

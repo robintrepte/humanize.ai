@@ -16,6 +16,8 @@ interface ExtendedUser {
   image: string | null;
   role: string;
   credits: number;
+  subscriptionStatus: string | null;
+  currentPeriodEnd: string | null;
 }
 
 interface UserWithPassword extends ExtendedUser {
@@ -42,12 +44,11 @@ export const authOptions: NextAuthOptions = {
         identifier: { label: "E-Mail oder Benutzername", type: "text" },
         password: { label: "Passwort", type: "password" }
       },
-      async authorize(credentials): Promise<ExtendedUser | null> {
+      async authorize(credentials): Promise<User | null> {
         if (!credentials?.identifier || !credentials?.password) {
           return null;
         }
 
-        // Suche nach dem Benutzer mit E-Mail oder Benutzername
         const user = await prisma.user.findFirst({
           where: {
             OR: [
@@ -57,12 +58,10 @@ export const authOptions: NextAuthOptions = {
           }
         });
 
-        // Wenn kein Benutzer gefunden wurde oder kein Passwort gesetzt ist
         if (!user || !user.password) {
           throw new Error("No user found");
         }
 
-        // Überprüfe das Passwort
         const passwordValid = await bcrypt.compare(credentials.password, user.password);
 
         if (!passwordValid) {
@@ -75,7 +74,9 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           image: user.image,
           role: user.role,
-          credits: user.credits
+          credits: user.credits,
+          subscriptionStatus: user.subscriptionStatus,
+          currentPeriodEnd: user.currentPeriodEnd?.toISOString() || null
         };
       }
     }),
@@ -83,16 +84,17 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       async profile(profile) {
-        // Generiere einen gültigen Benutzernamen
-        const username = profile.name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9-_]/g, ''); // Entferne Leerzeichen und ungültige Zeichen
+        const username = profile.name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9-_]/g, '');
         return {
-          id: profile.sub, // Verwende 'sub' als ID
+          id: profile.sub,
           name: profile.name,
           email: profile.email,
           image: profile.picture,
-          username, // Füge den bereinigten Benutzernamen hinzu
+          username,
           role: "user",
-          credits: 250 // Add default credits
+          credits: 250,
+          subscriptionStatus: null,
+          currentPeriodEnd: null
         };
       },
     }),
@@ -121,6 +123,8 @@ export const authOptions: NextAuthOptions = {
           session.user.image = currentUser.image || undefined;
           session.user.role = currentUser.role || "user";
           session.user.credits = currentUser.credits || 0;
+          session.user.subscriptionStatus = currentUser.subscriptionStatus || null;
+          session.user.currentPeriodEnd = currentUser.currentPeriodEnd?.toISOString() || null;
         }
       }
       return session;

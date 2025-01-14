@@ -20,6 +20,10 @@ function CreditsContent() {
 
   useEffect(() => {
     if (searchParams.get('success')) {
+      // Force session refresh
+      const event = new Event('visibilitychange');
+      document.dispatchEvent(event);
+      
       toast({
         title: "Payment successful",
         description: "Your credits have been added to your account.",
