@@ -19,6 +19,15 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface WebhookLog {
   id: number;
@@ -42,13 +51,26 @@ export default function WebhookList({ logs: initialLogs }: WebhookListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
 
   const filteredLogs = initialLogs.filter((log) => {
-    const matchesSearch = log.payload.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = 
+      log.payload.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.requestBody?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.responseBody?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || log.status === statusFilter;
     const matchesType = typeFilter === "all" || log.type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
   });
+
+  const formatJson = (jsonString: string | null) => {
+    if (!jsonString) return "";
+    try {
+      return JSON.stringify(JSON.parse(jsonString), null, 2);
+    } catch {
+      return jsonString;
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -87,9 +109,9 @@ export default function WebhookList({ logs: initialLogs }: WebhookListProps) {
             <TableHead>Date</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Response</TableHead>
+            <TableHead>Response Status</TableHead>
             <TableHead>Processing Time</TableHead>
-            <TableHead>Details</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -106,11 +128,61 @@ export default function WebhookList({ logs: initialLogs }: WebhookListProps) {
                   {log.status}
                 </Badge>
               </TableCell>
-              <TableCell className="max-w-[300px] truncate">
-                {log.payload}
+              <TableCell>
+                <Badge variant={log.responseStatus === 200 ? 'default' : 'destructive'}>
+                  {log.responseStatus}
+                </Badge>
               </TableCell>
-              <TableCell className="max-w-[300px] truncate text-destructive">
-                {log.error}
+              <TableCell>
+                {log.processingTimeMs ? `${log.processingTimeMs}ms` : 'N/A'}
+              </TableCell>
+              <TableCell>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setSelectedLog(log)}
+                    >
+                      View Details
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                      <DialogTitle>Webhook Details</DialogTitle>
+                    </DialogHeader>
+                    <ScrollArea className="h-[600px] w-full rounded-md border p-4">
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="font-semibold mb-2">Request Headers</h3>
+                          <pre className="bg-muted p-2 rounded-md overflow-x-auto">
+                            {formatJson(log.requestHeaders)}
+                          </pre>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-2">Request Body</h3>
+                          <pre className="bg-muted p-2 rounded-md overflow-x-auto">
+                            {formatJson(log.requestBody)}
+                          </pre>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-2">Response Body</h3>
+                          <pre className="bg-muted p-2 rounded-md overflow-x-auto">
+                            {formatJson(log.responseBody)}
+                          </pre>
+                        </div>
+                        {log.error && (
+                          <div>
+                            <h3 className="font-semibold mb-2 text-destructive">Error</h3>
+                            <pre className="bg-muted p-2 rounded-md overflow-x-auto text-destructive">
+                              {log.error}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </DialogContent>
+                </Dialog>
               </TableCell>
             </TableRow>
           ))}
