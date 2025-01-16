@@ -5,8 +5,6 @@ import prisma from '@/lib/prisma';
 import { createMollieClient } from '@mollie/api-client';
 import SubscriptionContent from "./SubscriptionContent";
 
-const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY! });
-
 export default async function SubscriptionPage() {
   const session = await getServerSession(authOptions);
 
@@ -14,20 +12,36 @@ export default async function SubscriptionPage() {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: { 
-      plan: true 
-    }
-  });
+  let user;
+  try {
+    user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { 
+        plan: true 
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return (
+      <div className="container max-w-2xl mx-auto p-6">
+        <div className="bg-destructive/15 text-destructive p-4 rounded-md">
+          <h2 className="font-semibold">Error</h2>
+          <p>Failed to load user data. Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     redirect("/");
   }
 
   let subscription;
-  if (user.subscriptionId) {
+  let error;
+  
+  if (user.subscriptionId && process.env.MOLLIE_API_KEY) {
     try {
+      const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY });
       const customers = await mollieClient.customers.page();
       const customer = customers.find(c => 
         c.metadata && (c.metadata as any).userId === user.id.toString()
@@ -39,8 +53,9 @@ export default async function SubscriptionPage() {
           { customerId: customer.id }
         );
       }
-    } catch (error) {
-      console.error('Error fetching subscription:', error);
+    } catch (e) {
+      console.error('Error fetching subscription:', e);
+      error = 'Unable to load subscription details. Some features may be limited.';
     }
   }
 
@@ -51,5 +66,5 @@ export default async function SubscriptionPage() {
     currentPeriodEnd: user.currentPeriodEnd || session.user.currentPeriodEnd
   };
 
-  return <SubscriptionContent user={completeUser} subscription={subscription} />;
+  return <SubscriptionContent user={completeUser} subscription={subscription} error={error} />;
 } 
