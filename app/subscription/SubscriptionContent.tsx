@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,11 +16,23 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Loader2 } from "lucide-react";
 
-export default function SubscriptionContent({ user, subscription }: any) {
+export default function SubscriptionContent({ user, subscription, error }: any) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Warning",
+        description: error,
+      });
+    }
+  }, [error, toast]);
 
   if (user.subscriptionStatus !== "active") {
     return (
@@ -42,13 +54,16 @@ export default function SubscriptionContent({ user, subscription }: any) {
 
   const handleCancelSubscription = async () => {
     setIsLoading(true);
+    setLocalError(null);
+    
     try {
       const response = await fetch('/api/subscription/cancel', {
         method: 'POST',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to cancel subscription');
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to cancel subscription');
       }
 
       toast({
@@ -58,10 +73,12 @@ export default function SubscriptionContent({ user, subscription }: any) {
 
       router.refresh();
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to cancel subscription";
+      setLocalError(errorMessage);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to cancel subscription",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -75,9 +92,15 @@ export default function SubscriptionContent({ user, subscription }: any) {
           <CardTitle>Subscription Management</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {localError && (
+            <div className="bg-destructive/15 text-destructive p-4 rounded-md mb-4">
+              <p>{localError}</p>
+            </div>
+          )}
+          
           <div className="space-y-2">
             <h3 className="font-semibold">Current Plan</h3>
-            <p className="text-2xl font-bold">{user.plan?.name}</p>
+            <p className="text-2xl font-bold">{user.plan?.name || 'Unknown Plan'}</p>
           </div>
 
           <div className="space-y-2">
@@ -87,14 +110,27 @@ export default function SubscriptionContent({ user, subscription }: any) {
 
           <div className="space-y-2">
             <h3 className="font-semibold">Next Payment</h3>
-            <p>{new Date(user.currentPeriodEnd).toLocaleDateString()}</p>
+            <p>{user.currentPeriodEnd ? new Date(user.currentPeriodEnd).toLocaleDateString() : 'Not available'}</p>
           </div>
+
+          {error && (
+            <div className="bg-yellow-50 text-yellow-800 p-4 rounded-md">
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
 
           <div className="pt-4">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" disabled={isLoading}>
-                  Cancel Subscription
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Cancelling...
+                    </>
+                  ) : (
+                    'Cancel Subscription'
+                  )}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
