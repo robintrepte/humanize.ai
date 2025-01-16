@@ -34,6 +34,24 @@ export default function SubscriptionContent({ user, subscription, error }: any) 
     }
   }, [error, toast]);
 
+  if (!user) {
+    return (
+      <div className="container max-w-2xl mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Unable to load subscription information. Please try again later.</p>
+            <Button onClick={() => router.push('/humanize')} className="mt-4">
+              Return to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (user.subscriptionStatus !== "active") {
     return (
       <div className="container max-w-2xl mx-auto p-6">
