@@ -5,6 +5,28 @@ import prisma from '@/lib/prisma';
 import { createMollieClient } from '@mollie/api-client';
 import SubscriptionContent from "./SubscriptionContent";
 
+interface MollieSubscription {
+  id: string;
+  mode: string;
+  createdAt: string;
+  status: string;
+  amount: {
+    value: string;
+    currency: string;
+  };
+  times?: number;
+  timesRemaining?: number;
+  interval: string;
+  startDate: string;
+  nextPaymentDate: string;
+  description: string;
+  method: string | null;
+  mandateId: string | null;
+  metadata: any;
+  canceledAt: string | null;
+  webhookUrl: string;
+}
+
 export default async function SubscriptionPage() {
   try {
     const session = await getServerSession(authOptions);
@@ -52,10 +74,16 @@ export default async function SubscriptionPage() {
 
         if (customer) {
           try {
-            subscription = await mollieClient.customerSubscriptions.get(
+            const subscriptionData = await mollieClient.customerSubscriptions.get(
               user.subscriptionId,
               { customerId: customer.id }
-            );
+            ) as MollieSubscription;
+            
+            // Convert the Mollie subscription class to a plain object
+            subscription = {
+              ...subscriptionData,
+              customerId: customer.id
+            };
           } catch (subError) {
             console.error('Subscription fetch error:', subError);
             error = 'Unable to load subscription details';
