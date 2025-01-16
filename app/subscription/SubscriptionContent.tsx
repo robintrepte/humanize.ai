@@ -52,7 +52,7 @@ export default function SubscriptionContent({ user, subscription, error }: any) 
     );
   }
 
-  if (user.subscriptionStatus !== "active") {
+  if (user.subscriptionStatus !== "active" && user.subscriptionStatus !== "canceled_end_period") {
     return (
       <div className="container max-w-2xl mx-auto p-6">
         <Card>
@@ -123,12 +123,24 @@ export default function SubscriptionContent({ user, subscription, error }: any) 
 
           <div className="space-y-2">
             <h3 className="font-semibold">Status</h3>
-            <p className="capitalize">{subscription?.status || user.subscriptionStatus}</p>
+            <p className="capitalize">
+              {subscription?.status === 'canceled' || user.subscriptionStatus === 'canceled_end_period' 
+                ? 'Canceled' 
+                : subscription?.status || user.subscriptionStatus}
+            </p>
           </div>
 
           <div className="space-y-2">
-            <h3 className="font-semibold">Next Payment</h3>
-            <p>{user.currentPeriodEnd ? new Date(user.currentPeriodEnd).toLocaleDateString() : 'Not available'}</p>
+            <h3 className="font-semibold">
+              {subscription?.status === 'canceled' || user.subscriptionStatus === 'canceled_end_period'
+                ? 'Active Until'
+                : 'Next Payment'}
+            </h3>
+            <p>
+              {user.currentPeriodEnd 
+                ? new Date(user.currentPeriodEnd).toLocaleDateString() 
+                : 'Not available'}
+            </p>
           </div>
 
           {error && (
@@ -138,38 +150,55 @@ export default function SubscriptionContent({ user, subscription, error }: any) 
           )}
 
           <div className="pt-4">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Cancelling...
-                    </>
-                  ) : (
-                    'Cancel Subscription'
-                  )}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will cancel your subscription at the end of your current billing period.
-                    You will still have access to your subscription benefits until then.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleCancelSubscription}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Cancel Subscription
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            {subscription?.status === 'canceled' || user.subscriptionStatus === 'canceled_end_period' ? (
+              <Button 
+                onClick={() => router.push('/humanize')} 
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Renew Subscription'
+                )}
+              </Button>
+            ) : (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Cancelling...
+                      </>
+                    ) : (
+                      'Cancel Subscription'
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will cancel your subscription at the end of your current billing period.
+                      You will still have access to your subscription benefits until then.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleCancelSubscription}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Cancel Subscription
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </CardContent>
       </Card>
