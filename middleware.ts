@@ -21,9 +21,9 @@ export async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET 
   })
 
-  // Redirect to humanize if authenticated and trying to access landing, login, or register pages
+  // Redirect to dashboard homepage if authenticated and trying to access landing, login, or register pages
   if (token && (pathname === '/' || pathname === '/login' || pathname === '/register')) {
-    return NextResponse.redirect(new URL('/humanize', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // Redirect to landing page if not authenticated and trying to access protected routes

@@ -63,7 +63,7 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
 
           <div className="flex justify-center pt-2">
             <Button className="w-full" asChild>
-              <a href="/support" target="_blank" rel="noopener noreferrer">
+              <a href="/support" rel="noopener noreferrer">
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Contact Support
               </a>

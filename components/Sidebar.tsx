@@ -96,7 +96,7 @@ export function Sidebar() {
 
             {/* Logo Section - Now below collapse button */}
             <div className="flex justify-center pb-8 border-b">
-              <Link href="/" className="flex items-center space-x-2">
+              <Link href="/dashboard" className="flex items-center space-x-2">
                 <span className={`font-bold ${isCollapsed ? 'text-xl' : 'text-3xl'}`}>21AI</span>
               </Link>
             </div>
