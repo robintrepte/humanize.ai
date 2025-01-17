@@ -6,6 +6,7 @@ import { Pricing } from '@/components/landing/Pricing'
 import { FAQ } from '@/components/landing/FAQ'
 import { CTA } from '@/components/landing/CTA'
 import { Footer } from '@/components/landing/Footer'
+import { Why } from '@/components/landing/Why'
 
 export default function LandingPage() {
   return (
@@ -13,6 +14,7 @@ export default function LandingPage() {
       <Header />
       <Hero />
       <Features />
+      <Why />
       <Testimonials />
       <Pricing />
       <FAQ />
