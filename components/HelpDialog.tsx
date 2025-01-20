@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Check, X } from "lucide-react"
 import { MessageCircle } from "lucide-react"
+import Link from "next/link"
 
 interface HelpDialogProps {
   open: boolean
@@ -63,10 +64,10 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
 
           <div className="flex justify-center pt-2">
             <Button className="w-full" asChild>
-              <a href="/support" rel="noopener noreferrer">
+              <Link href="/support">
                 <MessageCircle className="mr-2 h-4 w-4" />
                 Contact Support
-              </a>
+              </Link>
             </Button>
           </div>
         </div>
