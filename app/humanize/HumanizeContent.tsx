@@ -304,7 +304,7 @@ export default function HumanizeContent() {
                   {!inputText && (
                     <Button 
                       variant="outline" 
-                      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-16 w-1/2" 
+                      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-16 w-[90%] md:w-1/2" 
                       onClick={handlePaste}
                       disabled={isLoading}
                     >

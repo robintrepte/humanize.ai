@@ -6,12 +6,14 @@ export async function middleware(request: NextRequest) {
   
   const { pathname } = request.nextUrl
   
-  // Allow access to auth-related pages and static files
+  // Allow access to auth-related pages, static files, and public pages
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/static') ||
-    pathname.startsWith('/images')
+    pathname.startsWith('/images') ||
+    pathname === '/imprint' ||
+    pathname === '/privacy'
   ) {
     return NextResponse.next()
   }

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Sparkles, Home, Users, Moon, Sun, Menu, X, ChevronLeft, ChevronRight, Gem, HelpCircle, Wallet, Settings, LogOut, BookmarkIcon, Shield, History } from "lucide-react"
+import { Sparkles, Home, Users, Moon, Sun, Menu, X, ChevronLeft, ChevronRight, Gem, HelpCircle, Wallet, Settings, LogOut, BookmarkIcon, Shield, History, PenTool } from "lucide-react"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -22,7 +22,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
+import Image from "next/image"
+import { cn } from "@/lib/utils"
 
 export function Sidebar() {
   const { data: session } = useSession()
@@ -33,6 +35,7 @@ export function Sidebar() {
   const [showHelpDialog, setShowHelpDialog] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const router = useRouter()
+  const currentPath = usePathname()
 
   useEffect(() => {
     setIsClient(true)
@@ -59,6 +62,8 @@ export function Sidebar() {
       return newState
     })
   }
+
+  const isActive = (path: string) => currentPath === path
 
   return (
     <>
@@ -97,21 +102,101 @@ export function Sidebar() {
             {/* Logo Section - Now below collapse button */}
             <div className="flex justify-center pb-8 border-b">
               <Link href="/dashboard" className="flex items-center space-x-2">
-                <span className={`font-bold ${isCollapsed ? 'text-xl' : 'text-3xl'}`}>21AI</span>
+                <Image
+                  src={isDarkMode ? "/images/twentyfirst-ai-logo-white.svg" : "/images/twentyfirst-ai-logo-black.svg"}
+                  alt="21AI Logo"
+                  width={isCollapsed ? 32 : 64}
+                  height={isCollapsed ? 32 : 64}
+                  className={`h-auto ${isCollapsed ? 'w-8' : 'w-16'}`}
+                />
               </Link>
             </div>
 
             {/* Main Navigation */}
-            <nav className="flex-1 p-4 space-y-4 flex flex-col items-center">
+            <nav className="flex-1 p-4 space-y-2 flex flex-col items-center">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="w-full">
-                      <Button 
-                        variant="ghost" 
-                        className={`w-full h-14 text-base flex items-center ${
-                          isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
-                        }`}
+                      <Button
+                        variant="ghost"
+                        className={`w-full h-12 text-sm flex items-center ${
+                          isCollapsed ? 'justify-center px-0' : 'justify-start px-4'
+                        } ${isActive('/dashboard') ? 'bg-accent' : ''}`}
+                        asChild
+                      >
+                        <Link href="/dashboard">
+                          <Home className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                          {!isCollapsed && <span className="ml-4">Dashboard</span>}
+                        </Link>
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                </Tooltip>
+              </TooltipProvider>
+
+              {session && (
+                <Link href="/saved" className="w-full">
+                  <Button
+                    variant="ghost"
+                    className={`w-full h-12 text-sm flex items-center ${
+                      isCollapsed ? 'justify-center px-0' : 'justify-start px-4'
+                    } ${isActive('/saved') ? 'bg-accent' : ''}`}
+                  >
+                    <BookmarkIcon className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                    {!isCollapsed && <span className="ml-4">Saved Texts</span>}
+                  </Button>
+                </Link>
+              )}
+
+              {/* Tools Section */}
+              <div className="w-full text-left px-4 pt-4">
+                <span className="text-sm font-semibold text-muted-foreground">Tools:</span>
+              </div>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="w-full">
+                      <Button
+                        variant="ghost"
+                        className={`w-full h-12 text-sm flex items-center ${
+                          isCollapsed ? 'justify-center px-0' : 'justify-start px-4'
+                        } ${isActive('/generate') ? 'bg-accent' : ''}`}
+                        disabled={!session}
+                        asChild={!!session}
+                      >
+                        {session ? (
+                          <Link href="/generate">
+                            <PenTool className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                            {!isCollapsed && <span className="ml-4">Text Generator</span>}
+                          </Link>
+                        ) : (
+                          <>
+                            <PenTool className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
+                            {!isCollapsed && <span className="ml-4">Text Generator</span>}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {!session && (
+                    <TooltipContent>
+                      <p>Please login to access Text Generator</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="w-full">
+                      <Button
+                        variant="ghost"
+                        className={`w-full h-12 text-sm flex items-center ${
+                          isCollapsed ? 'justify-center px-0' : 'justify-start px-4'
+                        } ${isActive('/humanize') ? 'bg-accent' : ''}`}
                         disabled={!session}
                         asChild={!!session}
                       >
@@ -137,16 +222,15 @@ export function Sidebar() {
                 </Tooltip>
               </TooltipProvider>
 
-              {/* Add Detector Navigation Item */}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="w-full">
-                      <Button 
-                        variant="ghost" 
-                        className={`w-full h-14 text-base flex items-center ${
-                          isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
-                        }`}
+                      <Button
+                        variant="ghost"
+                        className={`w-full h-12 text-sm flex items-center ${
+                          isCollapsed ? 'justify-center px-0' : 'justify-start px-4'
+                        } ${isActive('/detector') ? 'bg-accent' : ''}`}
                         disabled={!session}
                         asChild={!!session}
                       >
@@ -171,22 +255,6 @@ export function Sidebar() {
                   )}
                 </Tooltip>
               </TooltipProvider>
-
-              {session && (
-                <>
-                  <Link href="/saved" className="w-full">
-                    <Button 
-                      variant="ghost" 
-                      className={`w-full h-14 text-base flex items-center ${
-                        isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
-                      }`}
-                    >
-                      <BookmarkIcon className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
-                      {!isCollapsed && <span className="ml-4">Saved Texts</span>}
-                    </Button>
-                  </Link>
-                </>
-              )}
             </nav>
 
             {/* Bottom Sections */}
@@ -195,21 +263,22 @@ export function Sidebar() {
               <div className="p-4 space-y-4">
                 {session && (
                   <>
-                    <Button 
-                      variant="ghost" 
-                      className={`w-full h-14 text-base flex items-center text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 ${
-                        isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
+                    <Button
+                      variant="ghost"
+                      className={`w-full h-12 text-sm flex items-center text-blue-500 ${
+                        isCollapsed ? 'justify-center px-0' : 'justify-start px-4'
                       }`}
                       onClick={() => {
                         console.log('Session user:', session?.user);
                         console.log('Subscription status:', session?.user?.subscriptionStatus);
                         console.log('Current period end:', session?.user?.currentPeriodEnd);
-                        console.log('Is date valid:', session?.user?.currentPeriodEnd && 
+                        console.log('Is date valid:', session?.user?.currentPeriodEnd &&
                           new Date(session.user.currentPeriodEnd) > new Date());
 
-                        const hasActiveSubscription = session?.user?.subscriptionStatus === 'active' && 
-                          session?.user?.currentPeriodEnd && 
-                          new Date(session.user.currentPeriodEnd) > new Date();
+                        const hasActiveSubscription = (session?.user?.subscriptionStatus === 'active' ||
+                          (session?.user?.subscriptionStatus === 'canceled_end_period' &&
+                           session?.user?.currentPeriodEnd &&
+                           new Date(session.user.currentPeriodEnd) > new Date()));
                           
                         if (hasActiveSubscription) {
                           router.push('/subscription');
@@ -218,9 +287,10 @@ export function Sidebar() {
                         }
                       }}
                     >
-                      {session?.user?.subscriptionStatus === 'active' && 
-                       session?.user?.currentPeriodEnd && 
-                       new Date(session.user.currentPeriodEnd) > new Date() ? (
+                      {session?.user?.subscriptionStatus === 'active' ||
+                        (session?.user?.subscriptionStatus === 'canceled_end_period' &&
+                         session?.user?.currentPeriodEnd &&
+                         new Date(session.user.currentPeriodEnd) > new Date()) ? (
                         <>
                           <Settings className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
                           {!isCollapsed && <span className="ml-4">Manage Subscription</span>}
@@ -232,10 +302,10 @@ export function Sidebar() {
                         </>
                       )}
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      className={`w-full h-14 text-base flex items-center ${
-                        isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
+                    <Button
+                      variant="ghost"
+                      className={`w-full h-12 text-sm flex items-center ${
+                        isCollapsed ? 'justify-center px-0' : 'justify-start px-4'
                       }`}
                       onClick={() => setShowHelpDialog(true)}
                     >
@@ -247,10 +317,10 @@ export function Sidebar() {
                     {session.user?.role === "admin" && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            className={`w-full h-14 text-base flex items-center ${
-                              isCollapsed ? 'justify-center px-0' : 'justify-start px-6'
+                          <Button
+                            variant="ghost"
+                            className={`w-full h-12 text-sm flex items-center text-red-500 ${
+                              isCollapsed ? 'justify-center px-0' : 'justify-start px-4'
                             }`}
                           >
                             <Settings className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
@@ -304,8 +374,8 @@ export function Sidebar() {
                           </div>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" side="top" className="w-56">
-                          <DropdownMenuItem 
-                            className="border-b cursor-pointer flex items-center w-full py-3 text-base" 
+                          <DropdownMenuItem
+                            className="border-b cursor-pointer flex items-center w-full py-3 text-base"
                             onClick={() => setShowPricingDialog(true)}
                           >
                             <Gem className="mr-3 h-5 w-5 text-blue-500" />
@@ -317,8 +387,8 @@ export function Sidebar() {
                               Edit Account
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="cursor-pointer text-red-600 focus:text-red-600 flex items-center w-full py-3 text-base" 
+                          <DropdownMenuItem
+                            className="cursor-pointer text-red-600 focus:text-red-600 flex items-center w-full py-3 text-base"
                             onClick={() => signOut()}
                           >
                             <LogOut className="mr-3" />
@@ -358,13 +428,14 @@ export function Sidebar() {
         />
       )}
 
-      <PricingDialog 
-        open={showPricingDialog} 
+      <PricingDialog
+        open={showPricingDialog}
         onOpenChange={setShowPricingDialog}
+        currentPlan={null}
       />
 
-      <HelpDialog 
-        open={showHelpDialog} 
+      <HelpDialog
+        open={showHelpDialog}
         onOpenChange={setShowHelpDialog}
       />
     </>

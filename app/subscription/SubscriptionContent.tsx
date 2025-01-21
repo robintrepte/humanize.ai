@@ -17,12 +17,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
+import { PricingDialog } from "@/components/PricingDialog";
 
 export default function SubscriptionContent({ user, subscription, error }: any) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [showPricingDialog, setShowPricingDialog] = useState(false);
 
   useEffect(() => {
     if (error) {
@@ -43,7 +45,7 @@ export default function SubscriptionContent({ user, subscription, error }: any) 
           </CardHeader>
           <CardContent>
             <p>Unable to load subscription information. Please try again later.</p>
-            <Button onClick={() => router.push('/humanize')} className="mt-4">
+            <Button onClick={() => router.push('/')} className="mt-4">
               Return to Dashboard
             </Button>
           </CardContent>
@@ -61,7 +63,7 @@ export default function SubscriptionContent({ user, subscription, error }: any) 
           </CardHeader>
           <CardContent className="space-y-6">
             <p>You currently don't have an active subscription.</p>
-            <Button onClick={() => router.push('/humanize')}>
+            <Button onClick={() => router.push('/')}>
               Return to Dashboard
             </Button>
           </CardContent>
@@ -152,7 +154,7 @@ export default function SubscriptionContent({ user, subscription, error }: any) 
           <div className="pt-4">
             {subscription?.status === 'canceled' || user.subscriptionStatus === 'canceled_end_period' ? (
               <Button 
-                onClick={() => router.push('/humanize')} 
+                onClick={() => setShowPricingDialog(true)} 
                 className="bg-blue-600 hover:bg-blue-700"
                 disabled={isLoading}
               >
@@ -202,6 +204,12 @@ export default function SubscriptionContent({ user, subscription, error }: any) 
           </div>
         </CardContent>
       </Card>
+
+      <PricingDialog 
+        open={showPricingDialog} 
+        onOpenChange={setShowPricingDialog}
+        currentPlan={user.plan}
+      />
     </div>
   );
 } 

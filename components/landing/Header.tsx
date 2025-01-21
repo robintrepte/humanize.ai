@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Moon, Sun } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 
 export function Header() {
   const [isDarkMode, setIsDarkMode] = useState(false)
@@ -24,18 +25,24 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 py-2 bg-background/60 backdrop-blur">
       <div className="flex justify-between items-center container px-4 md:px-6">
-        <Link href="/dashboard" className="text-xl font-bold">
-          21AI
+        <Link href="/dashboard" className="flex items-center">
+          <Image
+            src={isDarkMode ? "/images/twentyfirst-ai-logo-white.svg" : "/images/twentyfirst-ai-logo-black.svg"}
+            alt="21AI Logo"
+            width={32}
+            height={32}
+            className="h-16 w-16 mr-2"
+          />
         </Link>
         <div className="flex items-center gap-4">
           <Button variant="ghost" asChild>
             <Link href="#pricing">Pricing</Link>
           </Button>
-          <Button onClick={toggleDarkMode} variant="ghost" size="icon">
-            {isDarkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-          </Button>
           <Button asChild>
             <Link href="/register">Get Started</Link>
+          </Button>
+          <Button onClick={toggleDarkMode} variant="ghost" size="icon">
+            {isDarkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
           </Button>
         </div>
       </div>

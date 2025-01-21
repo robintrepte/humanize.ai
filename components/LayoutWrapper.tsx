@@ -11,12 +11,14 @@ export default function LayoutWrapper({
   // Get current path
   const pathname = usePathname();
   
-  // Check if current path is login or register
+  // Check if current path is login, register, imprint, or privacy
   const isAuthPage = pathname === "/login" || pathname === "/register";
   const isLandingPage = pathname === "/";
+  const isImprintPage = pathname === "/imprint";
+  const isPrivacyPage = pathname === "/privacy";
 
-  // Don't show sidebar on auth pages or landing page
-  const showSidebar = !isAuthPage && !isLandingPage;
+  // Don't show sidebar on auth pages, landing page, imprint page, or privacy page
+  const showSidebar = !isAuthPage && !isLandingPage && !isImprintPage && !isPrivacyPage;
 
   if (showSidebar) {
     return (

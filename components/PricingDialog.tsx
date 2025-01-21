@@ -11,13 +11,15 @@ import { Check } from "lucide-react"
 import { useToast } from "@/components/hooks/use-toast"
 import { useEffect, useState } from "react"
 import { Plan } from "@prisma/client"
+import { PricingCard } from "@/components/PricingCard"
 
 interface PricingDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  currentPlan: Plan | null
 }
 
-export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
+export function PricingDialog({ open, onOpenChange, currentPlan }: PricingDialogProps) {
   const { toast } = useToast()
   const [plans, setPlans] = useState<Plan[]>([])
 
@@ -43,6 +45,8 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
       fetchPlans()
     }
   }, [open, toast])
+
+  console.log("Current Plan in Dialog:", currentPlan)
 
   const handleSubscribe = async (plan: Plan) => {
     try {
@@ -83,39 +87,17 @@ export function PricingDialog({ open, onOpenChange }: PricingDialogProps) {
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
           {plans.map((plan) => (
-            <div key={plan.id} className="rounded-lg border p-6 space-y-4">
-              <h3 className="text-xl font-semibold">{plan.name}</h3>
-              <div className="flex items-baseline">
-                <span className="text-3xl font-bold">${plan.price}</span>
-                <span className="text-muted-foreground ml-1">/ mo</span>
-              </div>
-              <p className="text-lg">
-                {plan.credits === -1 ? (
-                  <span className="text-blue-500">Unlimited Credits *</span>
-                ) : (
-                  `${plan.credits.toLocaleString()} Credits`
-                )}
-              </p>
-              <Button 
-                className="w-full" 
-                onClick={() => handleSubscribe(plan)}
-              >
-                Subscribe
-              </Button>
-              <div className="pt-4">
-                {plan.features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    <span>{feature}</span>
-                  </div>
-                ))}
-                {plan.credits === -1 && (
-                  <div className="text-sm text-muted-foreground mt-2">
-                    * Usage is capped at 100,000 credits per week
-                  </div>
-                )}
-              </div>
-            </div>
+            <PricingCard
+              key={plan.id}
+              title={plan.name}
+              price={`$${plan.price}`}
+              features={plan.features}
+              description={plan.description}
+              popular={plan.isPopular}
+              credits={plan.credits}
+              currentPlan={currentPlan ? { title: currentPlan.name, price: `$${currentPlan.price}` } : undefined}
+              onOpenChange={onOpenChange}
+            />
           ))}
         </div>
       </DialogContent>

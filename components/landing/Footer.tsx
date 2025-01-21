@@ -1,29 +1,43 @@
+'use client'
+
 import Link from 'next/link'
+import Image from 'next/image'
+import { useEffect, useState } from 'react'
 
 export function Footer() {
+  const [isDarkMode, setIsDarkMode] = useState(false)
+
+  useEffect(() => {
+    const currentTheme = localStorage.getItem("theme") ?? "dark"
+    setIsDarkMode(currentTheme === "dark")
+  }, [])
+
   return (
     <footer className="bg-background py-8">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
-            <Link href="/" className="text-xl font-bold">
-              Humanizer by 21AI
+            <Link href="/" className="flex items-center">
+              <Image
+                src={isDarkMode ? "/images/twentyfirst-ai-logo-white.svg" : "/images/twentyfirst-ai-logo-black.svg"}
+                alt="21AI Logo"
+                width={32}
+                height={32}
+                className="h-16 w-16 mr-2"
+              />
             </Link>
           </div>
           <nav className="flex flex-wrap justify-center md:justify-end gap-4">
-            <Link href="/impressum" className="text-sm text-muted-foreground hover:text-foreground">
-              Impressum
+            <Link href="/imprint" className="text-sm text-muted-foreground hover:text-foreground">
+              Imprint
             </Link>
-            <Link href="/datenschutz" className="text-sm text-muted-foreground hover:text-foreground">
-              Datenschutz
-            </Link>
-            <Link href="/support" className="text-sm text-muted-foreground hover:text-foreground">
-              Support
+            <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground">
+              Privacy Policy
             </Link>
           </nav>
         </div>
         <div className="mt-8 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Humanizer by 21AI. All rights reserved.
+          © {new Date().getFullYear()} Twentyfirst Media Group. All rights reserved.
         </div>
       </div>
     </footer>

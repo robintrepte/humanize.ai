@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Shield, BookmarkIcon, Loader2 } from "lucide-react";
+import { Sparkles, Shield, BookmarkIcon, Loader2, PenTool } from "lucide-react";
 import Link from "next/link";
 import { PricingDialog } from "@/components/PricingDialog";
 
@@ -34,8 +34,15 @@ export default function DashboardPage() {
 
   const tools = [
     {
-      title: "AI Text Humanizer",
-      description: "Transform AI-generated text into natural, human-like content",
+      title: "Text Generator",
+      description: "Generate various types of content with AI",
+      icon: <PenTool className="h-8 w-8" />,
+      href: "/generate",
+      color: "text-orange-500",
+    },
+    {
+      title: "Text Humanizer",
+      description: "Transform AI-generated text into human-like content",
       icon: <Sparkles className="h-8 w-8" />,
       href: "/humanize",
       color: "text-blue-500",
@@ -56,6 +63,19 @@ export default function DashboardPage() {
     },
   ];
 
+  const handleCreditsButtonClick = () => {
+    const hasActiveSubscription = (session?.user?.subscriptionStatus === 'active' ||
+      (session?.user?.subscriptionStatus === 'canceled_end_period' &&
+       session?.user?.currentPeriodEnd &&
+       new Date(session.user.currentPeriodEnd) > new Date()));
+
+    if (hasActiveSubscription) {
+      router.push('/subscription');
+    } else {
+      setShowPricingDialog(true);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <header className="shrink-0 py-6 border-b">
@@ -64,11 +84,11 @@ export default function DashboardPage() {
             Welcome back, {session.user?.username || "User"}!
           </h1>
         </div>
-      </header>
+      </header> 
       
       <main className="flex-1 p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid gap-6 md:grid-cols-3">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {tools.map((tool) => (
               <Link href={tool.href} key={tool.href}>
                 <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
@@ -92,8 +112,15 @@ export default function DashboardPage() {
                     <h2 className="text-xl font-semibold mb-2">Available Credits</h2>
                     <p className="text-3xl font-bold">{session.user?.credits || 0}</p>
                   </div>
-                  <Button onClick={() => setShowPricingDialog(true)}>
-                    Buy Credits
+                  <Button onClick={handleCreditsButtonClick}>
+                    {session?.user?.subscriptionStatus === 'active' ||
+                      (session?.user?.subscriptionStatus === 'canceled_end_period' &&
+                       session?.user?.currentPeriodEnd &&
+                       new Date(session.user.currentPeriodEnd) > new Date()) ? (
+                      "Manage Subscription"
+                    ) : (
+                      "Buy Credits"
+                    )}
                   </Button>
                 </div>
               </CardContent>
@@ -105,6 +132,7 @@ export default function DashboardPage() {
       <PricingDialog 
         open={showPricingDialog} 
         onOpenChange={setShowPricingDialog}
+        currentPlan={null}
       />
     </div>
   );

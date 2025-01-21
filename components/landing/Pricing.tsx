@@ -1,5 +1,5 @@
 import { getPricingPlans } from '@/lib/pricing'
-import { PricingCard } from './PricingCard'
+import { PricingCard } from '../PricingCard'
 
 export async function Pricing() {
   const plans = await getPricingPlans()
@@ -21,6 +21,7 @@ export async function Pricing() {
               description={plan.description}
               popular={plan.isPopular}
               credits={plan.credits}
+              onOpenChange={() => {}}
             />
           ))}
         </div>
