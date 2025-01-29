@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { OutlineItem, GeneratedContent } from '@/types/generate'
 import { Loader2, Check } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -34,10 +33,9 @@ export function ContentStep({
     return count + 1 + (item.subItems?.length || 0)
   }, 0)
 
-  const completedSections = Object.keys(generatedContent.content).length
+  const completedSections = Object.keys(generatedContent.content || {}).length
   const progress = (completedSections / totalSections) * 100
 
-  // Function to get all items in a flat array
   const getAllItems = (items: OutlineItem[], parentTitle?: string, depth = 1): OutlineItem[] => {
     return items.reduce((acc: OutlineItem[], item, index) => {
       const itemWithParent = {
@@ -56,10 +54,8 @@ export function ContentStep({
     }, []);
   };
 
-  // Get flat array of all items
-  const allItems = React.useMemo(() => getAllItems(outline), [outline]);
+  const allItems = useMemo(() => getAllItems(outline), [outline]);
 
-  // Add this helper function after getAllItems
   const getPreviousContent = (currentItem: OutlineItem, allItems: OutlineItem[], generatedContent: GeneratedContent) => {
     const currentIndex = allItems.findIndex(item => item.id === currentItem.id);
     const previousItems = allItems.slice(0, currentIndex);
@@ -78,13 +74,15 @@ export function ContentStep({
       .join('\n\n');
   };
 
-  const generateContent = React.useCallback(async (itemId: string) => {
+  const generateContent = useCallback(async (itemId: string) => {
     if (currentGeneratingId || generatedContent.content[itemId]) {
       return;
     }
     
     const currentItem = allItems.find(item => item.id === itemId);
     if (!currentItem) return;
+    
+    console.log(`Starting generation for section: ${currentItem.title}`);
     
     try {
       onContentChange({
@@ -116,18 +114,26 @@ export function ContentStep({
       }
 
       const { content } = await response.json();
+      console.log(`Content generated for section: ${currentItem.title}`, content.substring(0, 50) + '...');
 
-      onContentChange((prev: GeneratedContent) => ({
-        ...prev,
-        currentGeneratingId: null,
-        content: {
-          ...prev.content,
-          [itemId]: content
-        }
-      }));
+      onContentChange((prev: GeneratedContent) => {
+        console.log('Updating content state:', {
+          currentId: itemId,
+          contentLength: content.length,
+          prevContentKeys: Object.keys(prev.content)
+        });
+        return {
+          ...prev,
+          currentGeneratingId: null,
+          content: {
+            ...prev.content,
+            [itemId]: content
+          }
+        };
+      });
 
     } catch (error) {
-      console.error('Error generating content:', error);
+      console.error(`Error generating content for section: ${currentItem.title}`, error);
       onContentChange((prev: GeneratedContent) => ({
         ...prev,
         currentGeneratingId: null
@@ -135,23 +141,36 @@ export function ContentStep({
     }
   }, [allItems, currentGeneratingId, generatedContent, onContentChange]);
 
-  // Auto-generate content for the next item when the previous one is complete
   useEffect(() => {
     const generateNextContent = async () => {
       if (currentGeneratingId || progress >= 100) return;
 
+      const hasExistingContent = Object.keys(generatedContent.content || {}).length > 0;
+      
+      if (hasExistingContent && Object.keys(generatedContent.content).length === allItems.length) {
+        return;
+      }
+
       const nextItem = allItems.find(item => !generatedContent.content[item.id]);
       if (nextItem) {
-        await generateContent(nextItem.id);
+        await onGenerateContent(nextItem.id);
       }
     };
 
-    generateNextContent();
-  }, [currentGeneratingId, allItems, progress, generateContent, generatedContent.content]);
+    if (allItems.length > 0 && !isGenerating) {
+      generateNextContent();
+    }
+  }, [allItems, progress, isGenerating, generatedContent.content, onGenerateContent, currentGeneratingId]);
 
-  // Function to format the content with styled headers
   const formatContent = (items: OutlineItem[], depth = 1): string => {
     return items.map(item => {
+      console.log('Formatting item:', {
+        title: item.title,
+        id: item.id,
+        hasContent: !!generatedContent.content[item.id],
+        contentLength: generatedContent.content[item.id]?.length || 0
+      });
+
       const headerStyle = `font-bold ${
         depth === 1 ? 'text-2xl mb-4' :
         depth === 2 ? 'text-xl mb-3' :
@@ -160,9 +179,8 @@ export function ContentStep({
       
       let content = `<div class="${headerStyle}">${item.title}</div>\n\n`;
       
-      const itemContent = generatedContent.content[item.id];
-      if (itemContent) {
-        content += `<div class="mb-6">${itemContent}</div>\n\n`;
+      if (item.id && generatedContent.content[item.id]) {
+        content += `<div class="mb-6">${generatedContent.content[item.id]}</div>\n\n`;
       } else if (currentGeneratingId === item.id) {
         content += `<div class="mb-6 text-muted-foreground">Generating content...</div>\n\n`;
       } else {
@@ -177,8 +195,26 @@ export function ContentStep({
     }).join('\n');
   };
 
-  // Memoize the formatted content
-  const formattedContent = React.useMemo(() => formatContent(outline), [outline, generatedContent.content, currentGeneratingId]);
+  const formattedContent = useMemo(
+    () => formatContent(outline),
+    [outline, generatedContent.content, currentGeneratingId, formatContent]
+  );
+
+  const handleBack = () => {
+    if (progress > 0) {
+      if (window.confirm('Going back will save your progress. You can return to continue where you left off. Continue?')) {
+        onBack();
+      }
+    } else {
+      onBack();
+    }
+  };
+
+  const handleComplete = () => {
+    if (window.confirm('Completing will clear your progress. Are you sure you want to finish?')) {
+      onComplete();
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -200,13 +236,13 @@ export function ContentStep({
       <div className="flex justify-between">
         <Button
           variant="outline"
-          onClick={onBack}
+          onClick={handleBack}
           disabled={isGenerating}
         >
           Back
         </Button>
         <Button
-          onClick={onComplete}
+          onClick={handleComplete}
           disabled={isGenerating || progress < 100}
         >
           {isGenerating ? (

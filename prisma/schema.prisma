@@ -1,79 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
-  id             Int      @id @default(autoincrement())
-  username       String   @unique
-  name           String?
-  email          String   @unique
-  emailVerified  DateTime?
-  image          String?
-  password       String?
-  role           String   @default("user")
-  credits        Int      @default(0)
-  accounts       Account[]
-  sessions       Session[]
-  public         Boolean   @default(true)
-  humanizations  Humanization[]
-  subscriptionId String?   @unique
-  subscriptionStatus String? // 'active', 'canceled', 'expired'
-  currentPeriodEnd DateTime?
-  plan           Plan?     @relation(fields: [planId], references: [id])
-  planId         Int?
+  id                 Int            @id @default(autoincrement())
+  username           String         @unique
+  name               String?
+  email              String         @unique
+  emailVerified      DateTime?
+  image              String?
+  password           String?
+  role               String         @default("user")
+  public             Boolean        @default(true)
+  credits            Int            @default(0)
+  currentPeriodEnd   DateTime?
+  planId             Int?
+  subscriptionId     String?        @unique
+  subscriptionStatus String?
+  accounts           Account[]
+  generations        Generation[]
+  humanizations      Humanization[]
+  sessions           Session[]
+  plan               Plan?          @relation(fields: [planId], references: [id])
 }
 
 model Account {
-  id                Int       @id @default(autoincrement())
+  id                Int     @id @default(autoincrement())
   userId            Int
   type              String
   provider          String
-  providerAccountId String  @db.Text
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
 model Session {
-  id             Int       @id @default(autoincrement())
-  sessionToken   String    @unique
-  userId         Int
-  expires        DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           Int      @id @default(autoincrement())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
-  identifier            String
-  token                 String    @unique
-  expires               DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
   @@unique([identifier, token])
 }
 
 model Humanization {
-  id          Int      @id @default(autoincrement())
-  title       String?
-  inputText   String   @db.Text
-  outputText  String   @db.Text
-  language    String
-  level       String
-  createdAt   DateTime @default(now())
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  title      String?
+  inputText  String
+  outputText String
+  language   String
+  level      String
+  createdAt  DateTime @default(now())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Plan {
@@ -92,19 +91,32 @@ model Plan {
 
 model WebhookLog {
   id               Int      @id @default(autoincrement())
-  type             String   // 'payment' | 'subscription'
-  status           String   // 'success' | 'error'
-  payload          String   @db.Text
-  error            String?  @db.Text
-  requestHeaders   String?
-  requestBody      String?
-  responseStatus   Int?
-  responseBody     String?
-  processingTimeMs Int?
+  type             String
+  status           String
+  payload          String
+  error            String?
   createdAt        DateTime @default(now())
+  processingTimeMs Int?
+  requestBody      String?
+  requestHeaders   String?
+  responseBody     String?
+  responseStatus   Int?
 
   @@index([createdAt])
   @@index([type])
   @@index([status])
   @@index([responseStatus])
+}
+
+model Generation {
+  id          String   @id @default(cuid())
+  userId      Int
+  settings    Json
+  outline     Json?
+  content     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  currentStep String   @default("settings")
+  status      String?  @default("in_progress")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

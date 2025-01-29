@@ -33,4 +33,5 @@ export interface GeneratedContent {
   outline: OutlineItem[];
   content: { [key: string]: string }; // Maps outline item ID to content
   currentGeneratingId: string | null;
+  isLoading: boolean;
 } 

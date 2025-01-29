@@ -80,9 +80,9 @@ export function Sidebar() {
       <AnimatePresence mode="wait">
         {(isMobileMenuOpen || (isClient && window.innerWidth >= 768)) && (
           <motion.div
-            initial={{ x: -288 }}
-            animate={{ x: 0, width: isCollapsed ? 72 : 288 }}
-            exit={{ x: -288 }}
+            initial={{ x: -240 }}
+            animate={{ x: 0, width: isCollapsed ? 72 : 240 }}
+            exit={{ x: -240 }}
             transition={{ type: "spring", bounce: 0, duration: 0.3 }}
             className={`fixed md:relative top-0 left-0 z-40 h-full bg-background border-r flex flex-col
               ${isMobileMenuOpen ? 'block' : 'hidden md:block'}`}
@@ -150,7 +150,7 @@ export function Sidebar() {
               )}
 
               {/* Tools Section */}
-              <div className="w-full text-left px-4 pt-4">
+              <div className={cn("w-full text-left px-4 pt-4", isCollapsed && "hidden")}>
                 <span className="text-sm font-semibold text-muted-foreground">Tools:</span>
               </div>
 
@@ -293,7 +293,7 @@ export function Sidebar() {
                          new Date(session.user.currentPeriodEnd) > new Date()) ? (
                         <>
                           <Settings className="!h-6 !w-6 min-h-[1.5rem] min-w-[1.5rem]" />
-                          {!isCollapsed && <span className="ml-4">Manage Subscription</span>}
+                          {!isCollapsed && <span className="ml-4">My Subscription</span>}
                         </>
                       ) : (
                         <>

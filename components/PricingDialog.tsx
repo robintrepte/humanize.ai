@@ -46,8 +46,6 @@ export function PricingDialog({ open, onOpenChange, currentPlan }: PricingDialog
     }
   }, [open, toast])
 
-  console.log("Current Plan in Dialog:", currentPlan)
-
   const handleSubscribe = async (plan: Plan) => {
     try {
       const response = await fetch('/api/checkout', {
