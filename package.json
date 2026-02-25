@@ -67,8 +67,7 @@
     "tsx": "^4.19.0",
     "typescript": "^5.9.3"
   },
-  "description": "",
-  "main": "test-db.js",
+  "description": "AI text humanizer — transform AI-generated text into natural, human-like writing with Next.js, Auth.js, and Drizzle.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/robintrepte/humanize.ai.git"
