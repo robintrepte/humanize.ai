@@ -1,20 +1,13 @@
-import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '../../auth/[...nextauth]/options'
-import { AIClient } from '@/lib/ai-client'
-import { PrismaClient } from '@prisma/client'
-import { marked } from 'marked'
+import { NextResponse } from "next/server";
+import { AIClient } from "@/lib/ai-client";
+import { marked } from "marked";
 
 const aiClient = new AIClient({
-  provider: process.env.AI_PROVIDER as 'openai' | 'anthropic',
-  model: process.env.AI_MODEL || 'gpt-4o',
+  provider: process.env.AI_PROVIDER as "openai" | "anthropic",
+  model: process.env.AI_MODEL || "gpt-5-nano",
   temperature: 0.7,
   maxTokens: 1000,
-})
-
-const prisma = new PrismaClient()
-
-const CREDITS_PER_SECTION = 10 // Adjust this value as needed
+});
 
 // Configure marked options
 marked.setOptions({

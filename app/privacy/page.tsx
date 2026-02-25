@@ -1,6 +1,14 @@
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
 
+export const metadata = {
+  title: "Privacy Policy",
+  description:
+    "HumanizeAI privacy policy. How we collect, use and protect your personal data. Google login, data subject rights.",
+  alternates: { canonical: "/privacy" },
+  robots: { index: true, follow: true },
+};
+
 export default function Datenschutz() {
   return (
     <div className="flex flex-col min-h-screen">

@@ -1,28 +1,29 @@
-import { getServerSession } from "next-auth/next";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/api/auth/[...nextauth]/options";
-import prisma from '@/lib/prisma';
+import { db } from "@/lib/db";
+import { user, plan } from "@/db/schema";
+import { eq, asc } from "drizzle-orm";
 import PlanList from "./PlanList";
 import { Sparkles } from "lucide-react";
 
 export default async function AdminPlansPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
-  if (!session || !session.user) {
+  if (!session?.user) {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-  });
+  const [u] = await db
+    .select()
+    .from(user)
+    .where(eq(user.id, session.user.id))
+    .limit(1);
 
-  if (user?.role !== "admin") {
+  if (u?.role !== "admin") {
     redirect("/");
   }
 
-  const plans = await prisma.plan.findMany({
-    orderBy: { price: 'asc' }
-  });
+  const plans = await db.select().from(plan).orderBy(asc(plan.price));
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -39,4 +40,4 @@ export default async function AdminPlansPage() {
       </div>
     </div>
   );
-} 
+}

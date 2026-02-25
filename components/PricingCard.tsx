@@ -31,10 +31,6 @@ export function PricingCard({
   let buttonText = "Subscribe";
   const isCurrentPlan = currentPlan && title === currentPlan.title;
 
-  console.log("Current Plan:", currentPlan);
-  console.log("Title:", title);
-  console.log("Price:", price);
-
   if (currentPlan) {
     if (isCurrentPlan) {
       buttonText = "Manage Plan";

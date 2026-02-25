@@ -11,20 +11,22 @@ import { motion, AnimatePresence } from "framer-motion"
 
 export function Header() {
   const { data: session, status } = useSession()
-  const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(
+    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+  )
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    const currentTheme = localStorage.getItem("theme") ?? "dark"; // Standardmäßig dark
-    setIsDarkMode(currentTheme === "dark");
-    document.body.classList.toggle("dark", currentTheme === "dark");
+    const currentTheme = localStorage.getItem("theme") ?? "dark"
+    setIsDarkMode(currentTheme === "dark")
+    document.documentElement.classList.toggle("dark", currentTheme === "dark")
   }, [])
 
   const toggleDarkMode = () => {
     setIsDarkMode(prev => !prev)
     const newTheme = !isDarkMode ? "dark" : "light"
     localStorage.setItem("theme", newTheme)
-    document.body.classList.toggle("dark", !isDarkMode)
+    document.documentElement.classList.toggle("dark", !isDarkMode)
   }
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -54,7 +56,12 @@ export function Header() {
 
       {/* Desktop Aktionen */}
       <div className="hidden sm:flex items-center gap-4">
-        <Button onClick={toggleDarkMode} variant="ghost" size="icon">
+        <Button
+          onClick={toggleDarkMode}
+          variant="ghost"
+          size="icon"
+          aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+        >
           {isDarkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
         </Button>
         {status === "loading" ? (
@@ -160,7 +167,13 @@ export function Header() {
                 </>
               )}
               <div className="flex items-center gap-6 mt-10">
-                <Button onClick={toggleDarkMode} variant="ghost" size="icon" className="rounded-full">
+                <Button
+                  onClick={toggleDarkMode}
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full"
+                  aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+                >
                   {isDarkMode ? <Moon /> : <Sun />}
                 </Button>
                 {status === "loading" ? (

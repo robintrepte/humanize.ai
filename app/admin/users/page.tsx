@@ -1,32 +1,41 @@
-import { getServerSession } from "next-auth/next";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/api/auth/[...nextauth]/options";
-import prisma from '@/lib/prisma';
+import { db } from "@/lib/db";
+import { user, plan } from "@/db/schema";
+import { eq, asc } from "drizzle-orm";
 import UserList from "./UserList";
 import { Sparkles } from "lucide-react";
 
 export default async function AdminUsersPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
-  if (!session || !session.user) {
+  if (!session?.user) {
     redirect("/login");
   }
 
-  // Überprüfe ob der Benutzer Admin ist
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-  });
+  const [u] = await db
+    .select()
+    .from(user)
+    .where(eq(user.id, session.user.id))
+    .limit(1);
 
-  if (user?.role !== "admin") {
+  if (u?.role !== "admin") {
     redirect("/");
   }
 
-  // Hole alle Benutzer aus der Datenbank
-  const users = await prisma.user.findMany({
-    include: {
-      plan: true
-    }
-  });
+  const usersWithPlans = await db
+    .select({
+      user: user,
+      plan: plan,
+    })
+    .from(user)
+    .leftJoin(plan, eq(user.planId, plan.id))
+    .orderBy(asc(user.id));
+
+  const users = usersWithPlans.map((row) => ({
+    ...row.user,
+    plan: row.plan,
+  }));
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -45,4 +54,4 @@ export default async function AdminUsersPage() {
       </div>
     </div>
   );
-} 
+}

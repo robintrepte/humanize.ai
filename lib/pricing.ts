@@ -1,14 +1,11 @@
-import prisma from '@/lib/prisma'
+import { eq, asc } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { plan } from "@/db/schema";
 
 export async function getPricingPlans() {
-  const plans = await prisma.plan.findMany({
-    where: {
-      isActive: true
-    },
-    orderBy: {
-      price: 'asc'
-    }
-  })
-  
-  return plans
-} 
+  return db
+    .select()
+    .from(plan)
+    .where(eq(plan.isActive, true))
+    .orderBy(asc(plan.price));
+}

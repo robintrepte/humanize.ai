@@ -1,43 +1,46 @@
-import prisma from '@/lib/prisma';
+import "dotenv/config";
+import { db } from "../lib/db";
+import { user, plan } from "../db/schema";
+import { eq, and, isNotNull, gte } from "drizzle-orm";
 
 async function refillCredits() {
   try {
-    // Get all users with active subscriptions
-    const users = await prisma.user.findMany({
-      where: {
-        subscriptionStatus: 'active',
-        currentPeriodEnd: {
-          gte: new Date() // Only active subscriptions
-        },
-        planId: {
-          not: null
-        }
-      },
-      include: {
-        plan: true
-      }
-    });
+    const usersWithPlans = await db
+      .select({
+        user: user,
+        plan: plan,
+      })
+      .from(user)
+      .innerJoin(plan, eq(user.planId, plan.id))
+      .where(
+        and(
+          eq(user.subscriptionStatus, "active"),
+          isNotNull(user.currentPeriodEnd),
+          gte(user.currentPeriodEnd, new Date()),
+          isNotNull(user.planId)
+        )
+      );
 
-    console.log(`Found ${users.length} users with active subscriptions`);
+    console.log(
+      `Found ${usersWithPlans.length} users with active subscriptions`
+    );
 
-    for (const user of users) {
-      if (user.plan) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            credits: user.plan.credits
-          }
-        });
-        console.log(`Refilled credits for user ${user.id} to ${user.plan.credits}`);
+    for (const row of usersWithPlans) {
+      if (row.plan) {
+        await db
+          .update(user)
+          .set({ credits: row.plan.credits })
+          .where(eq(user.id, row.user.id));
+        console.log(
+          `Refilled credits for user ${row.user.id} to ${row.plan.credits}`
+        );
       }
     }
 
-    console.log('Credit refill completed successfully');
+    console.log("Credit refill completed successfully");
   } catch (error) {
-    console.error('Error refilling credits:', error);
-  } finally {
-    await prisma.$disconnect();
+    console.error("Error refilling credits:", error);
   }
 }
 
-refillCredits(); 
+refillCredits();

@@ -1,32 +1,42 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { user } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function PUT(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
-    if (!session || !session.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { userId, planId } = await req.json();
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: { 
-        planId,
-        subscriptionStatus: planId ? 'active' : null,
-        currentPeriodEnd: planId ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null
-      },
-      include: {
-        plan: true
-      }
-    });
+    const [updated] = await db
+      .update(user)
+      .set({
+        planId: planId ?? null,
+        subscriptionStatus: planId ? "active" : null,
+        currentPeriodEnd: planId
+          ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          : null,
+      })
+      .where(eq(user.id, userId))
+      .returning();
 
-    return NextResponse.json({ message: 'Plan updated successfully', user: updatedUser });
+    if (!updated) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    return NextResponse.json({
+      message: "Plan updated successfully",
+      user: updated,
+    });
   } catch (error) {
-    return NextResponse.json({ error: 'Error updating plan' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Error updating plan" },
+      { status: 500 }
+    );
   }
-} 
+}

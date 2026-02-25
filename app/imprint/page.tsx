@@ -1,6 +1,14 @@
 import { Header } from "@/components/landing/Header";
 import { Footer } from "@/components/landing/Footer";
 
+export const metadata = {
+  title: "Imprint",
+  description:
+    "Legal imprint and contact information for HumanizeAI. FollowerX GmbH, Hamburg, Germany.",
+  alternates: { canonical: "/imprint" },
+  robots: { index: true, follow: true },
+};
+
 export default function Impressum() {
   return (
     <div className="flex flex-col min-h-screen">

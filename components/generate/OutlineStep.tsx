@@ -35,12 +35,9 @@ export function OutlineStep({ outline, onOutlineChange, onBack, onNext, isLoadin
       parentTitle: parentId ? outline.find(item => item.id === parentId)?.title || '' : ''
     }
 
-    console.log('New item added:', newItem);
-
     if (!parentId) {
-      onOutlineChange([...outline, newItem])
-      console.log('Updated outline:', [...outline, newItem]);
-      return
+      onOutlineChange([...outline, newItem]);
+      return;
     }
 
     const updateItems = (items: OutlineItem[]): OutlineItem[] => {

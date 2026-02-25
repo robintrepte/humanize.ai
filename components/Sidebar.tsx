@@ -28,7 +28,9 @@ import { cn } from "@/lib/utils"
 
 export function Sidebar() {
   const { data: session } = useSession()
-  const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(
+    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+  )
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [showPricingDialog, setShowPricingDialog] = useState(false)
@@ -41,7 +43,7 @@ export function Sidebar() {
     setIsClient(true)
     const currentTheme = localStorage.getItem("theme") ?? "dark"
     setIsDarkMode(currentTheme === "dark")
-    document.body.classList.toggle("dark", currentTheme === "dark")
+    document.documentElement.classList.toggle("dark", currentTheme === "dark")
 
     // Load collapsed state from localStorage
     const savedCollapsedState = localStorage.getItem("sidebarCollapsed")
@@ -52,7 +54,7 @@ export function Sidebar() {
     setIsDarkMode(prev => !prev)
     const newTheme = !isDarkMode ? "dark" : "light"
     localStorage.setItem("theme", newTheme)
-    document.body.classList.toggle("dark", !isDarkMode)
+    document.documentElement.classList.toggle("dark", !isDarkMode)
   }
 
   const toggleCollapse = () => {
@@ -269,12 +271,6 @@ export function Sidebar() {
                         isCollapsed ? 'justify-center px-0' : 'justify-start px-4'
                       }`}
                       onClick={() => {
-                        console.log('Session user:', session?.user);
-                        console.log('Subscription status:', session?.user?.subscriptionStatus);
-                        console.log('Current period end:', session?.user?.currentPeriodEnd);
-                        console.log('Is date valid:', session?.user?.currentPeriodEnd &&
-                          new Date(session.user.currentPeriodEnd) > new Date());
-
                         const hasActiveSubscription = (session?.user?.subscriptionStatus === 'active' ||
                           (session?.user?.subscriptionStatus === 'canceled_end_period' &&
                            session?.user?.currentPeriodEnd &&
@@ -406,7 +402,12 @@ export function Sidebar() {
                       </Link>
                     )
                   )}
-                  <Button onClick={toggleDarkMode} variant="ghost" size="icon">
+                  <Button
+                    onClick={toggleDarkMode}
+                    variant="ghost"
+                    size="icon"
+                    aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+                  >
                     {isDarkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
                   </Button>
                 </div>

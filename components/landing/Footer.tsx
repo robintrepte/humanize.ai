@@ -5,7 +5,9 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 export function Footer() {
-  const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(
+    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+  )
 
   useEffect(() => {
     const currentTheme = localStorage.getItem("theme") ?? "dark"
@@ -14,15 +16,16 @@ export function Footer() {
 
   return (
     <footer className="bg-background py-8">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 md:px-6 max-w-7xl">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
             <Link href="/" className="flex items-center">
               <Image
                 src={isDarkMode ? "/images/twentyfirst-ai-logo-white.svg" : "/images/twentyfirst-ai-logo-black.svg"}
                 alt="21AI Logo"
-                width={32}
-                height={32}
+                width={64}
+                height={64}
+                sizes="64px"
                 className="h-16 w-16 mr-2"
               />
             </Link>

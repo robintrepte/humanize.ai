@@ -47,15 +47,16 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
    npm install
    ```
 
-3. Create a `.env` file with the following variables:
+3. Copy `.env.example` to `.env` and set variables (see `.env.example` for full list). Required:
    ```
-   DATABASE_URL="your-database-url"
-   NEXTAUTH_SECRET="your-nextauth-secret"
+   DATABASE_URL="your-postgres-url"
+   AUTH_SECRET="your-auth-secret"
    NEXTAUTH_URL="http://localhost:3003"
    OPENAI_API_KEY="your-openai-api-key"
    GOOGLE_CLIENT_ID="your-google-client-id"
    GOOGLE_CLIENT_SECRET="your-google-client-secret"
    ```
+   For production behind a proxy, set `AUTH_TRUST_HOST=true`.
 
 4. Start the development server:
    ```
@@ -113,10 +114,13 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
    DATABASE_URL="postgresql://humanizeai:your_secure_password@localhost:5432/humanizeai"
    ```
 
-4. Run database migrations:
+4. Apply database schema (Drizzle ORM):
    ```bash
-   # From your project directory
-   npx prisma migrate deploy
+   # New DB: push schema (creates/updates tables)
+   npm run db:push
+   # Or generate migrations and run:
+   # npm run db:generate
+   # npm run db:migrate
    ```
 
 ### Server Installation
@@ -187,37 +191,24 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
 
 ### Cron Job Setup for Credit Refills
 
-1. Make the refill script executable:
+1. Test the refill script locally (requires `.env` with `DATABASE_URL`):
    ```bash
-   chmod +x scripts/refill-credits.ts
+   npm run refill
    ```
 
-2. Compile the TypeScript script:
+2. Set up the cron job to run monthly (use full path to project):
    ```bash
-   # From your project directory
-   npx tsc scripts/refill-credits.ts --outDir dist
-   ```
-
-3. Test the script manually:
-   ```bash
-   node dist/refill-credits.js
-   ```
-
-4. Set up the cron job to run monthly:
-   ```bash
-   # Open crontab editor
    crontab -e
-   
-   # Add this line to run at midnight on the first day of each month
-   0 0 1 * * /usr/bin/node /var/www/humanize.twentyfirst.media/dist/refill-credits.js >> /var/www/humanize.twentyfirst.media/logs/cron.log 2>&1
+   # Run at midnight on the first day of each month
+   0 0 1 * * cd /var/www/humanize.twentyfirst.media && npm run refill >> /var/www/humanize.twentyfirst.media/logs/cron.log 2>&1
    ```
 
-5. Create the logs directory:
+3. Create the logs directory:
    ```bash
    mkdir -p /var/www/humanize.twentyfirst.media/logs
    ```
 
-6. Monitor the cron job:
+4. Monitor the cron job:
    ```bash
    # View cron logs
    tail -f /var/www/humanize.twentyfirst.media/logs/cron.log
@@ -226,11 +217,7 @@ HumanizeAI is a Next.js application that helps users transform AI-generated text
    systemctl status cron
    ```
 
-7. To update the script:
-   ```bash
-   # Recompile the TypeScript
-   npx tsc scripts/refill-credits.ts --outDir dist
-   ```
+5. To re-run refill manually: `npm run refill`
 
 ### Updating the Application
 

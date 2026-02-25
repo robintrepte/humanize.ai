@@ -1,21 +1,47 @@
 "use client";
-import { signIn, useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Header } from "@/components/Header"
+import { signIn, useSession, getSession } from "next-auth/react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Header } from "@/components/landing/Header"
+import { Footer } from "@/components/landing/Footer"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react"; // Fügen Sie diesen Import am Anfang der Datei hinzu
+import { Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
 
-export default function SignIn() {
+function getErrorMessage(errorCode: string | null): string {
+  switch (errorCode) {
+    case "CredentialsSignin":
+      return "Invalid email/username or password. Please try again.";
+    case "CallbackRouteError":
+      return "Invalid email/username or password. Please try again.";
+    case "No user found":
+      return "No account found. Please register first.";
+    case "OAuthAccountNotLinked":
+      return "This email is already linked to another sign-in method.";
+    case "OAuthCallback":
+    case "OAuthCreateAccount":
+    case "OAuthSignin":
+      return "Sign-in failed. Please try again.";
+    case "SessionRequired":
+      return "Please sign in to continue.";
+    default:
+      return errorCode ? "Sign-in failed. Please try again." : "";
+  }
+}
+
+function SignInForm() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [isPasswordLogin, setIsPasswordLogin] = useState(true); // Standardmäßig auf true setzen
+  const [isPasswordLogin, setIsPasswordLogin] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const clearError = useCallback(() => setError(null), []);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -23,34 +49,49 @@ export default function SignIn() {
     }
   }, [status, router]);
 
+  useEffect(() => {
+    const errorCode = searchParams.get("error");
+    const message = getErrorMessage(errorCode);
+    if (message) setError(message);
+  }, [searchParams]);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    let result;
-    if (isPasswordLogin) {
-      result = await signIn("credentials", {
-        identifier,
+    setError(null);
+    if (!isPasswordLogin) return;
+
+    setIsSubmitting(true);
+    try {
+      const result = await signIn("credentials", {
+        identifier: identifier.trim(),
         password,
         redirect: false,
       });
-      if (result?.ok) {
-        router.push("/");
-      } else {
-        switch (result?.error) {
-          case "No user found":
-            router.push(`/register?email=${encodeURIComponent(identifier)}&password=${encodeURIComponent(password)}&error=${encodeURIComponent("No user found. Please register:")}`);
-            break;
-          case "CredentialsSignin":
-            setError("Username/Email or password is incorrect");
-            break;
-          default:
-            setError("An error occurred. Please try again later.");
-        }
+
+      if (result?.error) {
+        const message = getErrorMessage(result.error);
+        setError(message || "Invalid email/username or password. Please try again.");
+        return;
       }
+
+      // Only redirect if we actually have a session (server can return 200 after redirect, so don't trust result.ok alone)
+      const session = await getSession();
+      if (session) {
+        router.push("/");
+        router.refresh();
+      } else {
+        setError("Invalid email/username or password. Please try again.");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <Header />
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-md w-full space-y-8">
           <div>
@@ -90,8 +131,12 @@ export default function SignIn() {
           </div>
           <form className="mt-8 space-y-6" onSubmit={handleSignIn}>
             {error && (
-              <div className="text-red-500 text-sm text-center">
-                {error}
+              <div
+                role="alert"
+                className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
             <div className="space-y-4">
@@ -105,7 +150,7 @@ export default function SignIn() {
                   required
                   placeholder="Username or Email"
                   value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  onChange={(e) => { setIdentifier(e.target.value); clearError(); }}
                   className="text-md"
                 />
               </div>
@@ -121,7 +166,7 @@ export default function SignIn() {
                       required
                       placeholder="Password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => { setPassword(e.target.value); clearError(); }}
                       className="text-md"
                     />
                     <button
@@ -143,8 +188,9 @@ export default function SignIn() {
               <Button
                 type="submit"
                 className="w-full"
+                disabled={isSubmitting}
               >
-                {isPasswordLogin ? "Sign In" : "Send Magic Link"}
+                {isSubmitting ? "Signing in…" : isPasswordLogin ? "Sign In" : "Send Magic Link"}
               </Button>
             </div>
           </form>
@@ -168,6 +214,19 @@ export default function SignIn() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col min-h-screen bg-background text-foreground items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <SignInForm />
+    </Suspense>
   );
 }

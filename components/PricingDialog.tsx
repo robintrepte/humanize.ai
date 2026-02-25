@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
 import { useToast } from "@/components/hooks/use-toast"
 import { useEffect, useState } from "react"
-import { Plan } from "@prisma/client"
+import type { Plan } from "@/db/schema"
 import { PricingCard } from "@/components/PricingCard"
 
 interface PricingDialogProps {

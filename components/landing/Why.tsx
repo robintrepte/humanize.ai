@@ -10,8 +10,8 @@ import * as CountryFlags from 'country-flag-icons/react/3x2'
 
 // Add PirateFlag component
 const PirateFlag = () => (
-  <div className="bg-black w-5 h-4 flex items-center justify-center inline-flex mr-1">
-    <Skull className="w-3 h-3 text-white" />
+  <div className="bg-foreground w-5 h-4 flex items-center justify-center inline-flex mr-1 rounded-sm">
+    <Skull className="w-3 h-3 text-background" />
   </div>
 );
 
@@ -113,8 +113,10 @@ export function Why() {
     <section className="py-16">
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="text-center space-y-4 pb-12">
-          <h2 className="text-sm text-primary font-mono font-medium tracking-wider uppercase">FEATURES</h2>
-          <h3 className="mx-auto mt-4 max-w-xs text-3xl font-semibold sm:max-w-none sm:text-4xl md:text-5xl">Why 21AI?</h3>
+          <h2 className="mx-auto max-w-xs text-3xl font-semibold sm:max-w-none sm:text-4xl md:text-5xl">
+            <span className="block text-sm text-primary font-mono font-medium tracking-wider uppercase mb-2">Features</span>
+            Why 21AI?
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -131,8 +133,8 @@ export function Why() {
                 <div className="flex items-center justify-between">
                   <div className={`text-sm px-2 py-1 rounded-full ${
                     isHumanized 
-                      ? 'bg-green-100 text-green-600' 
-                      : 'bg-red-100 text-red-600'
+                      ? 'bg-green-500/15 text-green-600 dark:text-green-400' 
+                      : 'bg-red-500/15 text-red-600 dark:text-red-400'
                   }`}>
                     {isHumanized ? '100% Human Text' : 'AI Detected'}
                   </div>
@@ -279,13 +281,13 @@ export function Why() {
                 <div className="bg-accent/50 p-4 rounded-lg text-sm h-32">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-sm font-medium">AI Detection Score</span>
-                    <span className={`font-semibold ${aiScore < 30 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`font-semibold ${aiScore < 30 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                       {aiScore}%
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div className="w-full bg-muted rounded-full h-2.5">
                     <div 
-                      className={`h-2.5 rounded-full ${aiScore < 30 ? 'bg-green-600' : 'bg-red-600'}`}
+                      className={`h-2.5 rounded-full ${aiScore < 30 ? 'bg-green-600 dark:bg-green-500' : 'bg-red-600 dark:bg-red-500'}`}
                       style={{ width: `${aiScore}%` }}
                     ></div>
                   </div>

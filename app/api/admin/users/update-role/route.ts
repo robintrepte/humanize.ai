@@ -1,25 +1,36 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { user } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function PUT(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
-    if (!session || !session.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { userId, role } = await req.json();
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: { role },
-    });
+    const [updated] = await db
+      .update(user)
+      .set({ role })
+      .where(eq(user.id, userId))
+      .returning();
 
-    return NextResponse.json({ message: 'Role updated successfully', user: updatedUser });
+    if (!updated) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    return NextResponse.json({
+      message: "Role updated successfully",
+      user: updated,
+    });
   } catch (error) {
-    return NextResponse.json({ error: 'Error updating role' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Error updating role" },
+      { status: 500 }
+    );
   }
-} 
+}

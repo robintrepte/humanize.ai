@@ -1,33 +1,41 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { user } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
-    if (!session || !session.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { userId } = await req.json();
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
+    const [updated] = await db
+      .update(user)
+      .set({
         planId: null,
         subscriptionId: null,
         subscriptionStatus: null,
-        currentPeriodEnd: null
-      },
-      include: {
-        plan: true
-      }
-    });
+        currentPeriodEnd: null,
+      })
+      .where(eq(user.id, userId))
+      .returning();
 
-    return NextResponse.json({ message: 'Subscription reset successfully', user: updatedUser });
+    if (!updated) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    return NextResponse.json({
+      message: "Subscription reset successfully",
+      user: updated,
+    });
   } catch (error) {
-    return NextResponse.json({ error: 'Error resetting subscription' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Error resetting subscription" },
+      { status: 500 }
+    );
   }
 }

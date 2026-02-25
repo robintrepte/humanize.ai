@@ -24,8 +24,10 @@ export function Features() {
     <section id="built-for-everyone" className="py-16">
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="text-center space-y-4 pb-6 mx-auto">
-          <h2 className="text-sm text-primary font-mono font-medium tracking-wider uppercase">BUILT FOR EVERYONE</h2>
-          <h3 className="mx-auto mt-4 max-w-xs text-3xl font-semibold sm:max-w-none sm:text-4xl md:text-5xl">Humanize any AI-generated text</h3>
+          <h2 className="mx-auto max-w-xs text-3xl font-semibold sm:max-w-none sm:text-4xl md:text-5xl">
+            <span className="block text-sm text-primary font-mono font-medium tracking-wider uppercase mb-2">Built for everyone</span>
+            Humanize any AI-generated text
+          </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
           <FeatureCard

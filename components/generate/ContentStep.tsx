@@ -81,9 +81,7 @@ export function ContentStep({
     
     const currentItem = allItems.find(item => item.id === itemId);
     if (!currentItem) return;
-    
-    console.log(`Starting generation for section: ${currentItem.title}`);
-    
+
     try {
       onContentChange({
         ...generatedContent,
@@ -114,14 +112,8 @@ export function ContentStep({
       }
 
       const { content } = await response.json();
-      console.log(`Content generated for section: ${currentItem.title}`, content.substring(0, 50) + '...');
 
       onContentChange((prev: GeneratedContent) => {
-        console.log('Updating content state:', {
-          currentId: itemId,
-          contentLength: content.length,
-          prevContentKeys: Object.keys(prev.content)
-        });
         return {
           ...prev,
           currentGeneratingId: null,
@@ -164,13 +156,6 @@ export function ContentStep({
 
   const formatContent = (items: OutlineItem[], depth = 1): string => {
     return items.map(item => {
-      console.log('Formatting item:', {
-        title: item.title,
-        id: item.id,
-        hasContent: !!generatedContent.content[item.id],
-        contentLength: generatedContent.content[item.id]?.length || 0
-      });
-
       const headerStyle = `font-bold ${
         depth === 1 ? 'text-2xl mb-4' :
         depth === 2 ? 'text-xl mb-3' :

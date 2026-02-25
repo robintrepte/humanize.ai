@@ -22,7 +22,6 @@ export default function EditProfile() {
     if (status === "authenticated" && session?.user) {
       setUsername((session.user as { username?: string }).username || "");
       setEmail(session.user.email || "");
-      console.log("Sitzung geladen:", session);
     }
   }, [session, status]);
 
@@ -49,11 +48,9 @@ export default function EditProfile() {
     // Validierung des Benutzernamens
     const usernameRegex = /^[a-zA-Z0-9-_]+$/; // Erlaubt nur Buchstaben, Zahlen, Bindestriche und Unterstriche
     if (!usernameRegex.test(username)) {
-        console.error('Benutzername darf keine Leerzeichen oder ungültige Symbole enthalten.');
-        return; // Abbrechen, wenn die Validierung fehlschlägt
+      setUsernameError('Username may only contain letters, numbers, hyphens and underscores.');
+      return;
     }
-
-    console.log("Aktualisiere Profil mit:", { username, email, password });
 
     try {
       const response = await fetch('/api/profile/update', {
@@ -69,9 +66,8 @@ export default function EditProfile() {
       }
 
       const result = await response.json();
-      console.log('Profil erfolgreich aktualisiert', result);
 
-      // Aktualisieren Sie den lokalen Zustand
+      // Update local state
       setUsername(result.user.username);
       setEmail(result.user.email);
       setPassword("");

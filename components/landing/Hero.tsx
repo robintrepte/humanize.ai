@@ -29,8 +29,10 @@ export function Hero() {
           src="/images/placeholder.svg?height=400&width=768"
           width={768}
           height={400}
+          sizes="(max-width: 768px) 100vw, 768px"
           className="relative h-full w-full rounded-xl"
           alt="Humanizer by 21AI dashboard"
+          priority
           unoptimized
         />
       </div>

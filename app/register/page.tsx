@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Header } from "@/components/Header"
+import { Header } from "@/components/landing/Header"
+import { Footer } from "@/components/landing/Footer"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import Link from "next/link";
@@ -75,7 +76,8 @@ export default function Register() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <Header />
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="max-w-md w-full space-y-8">
           <div>
@@ -192,6 +194,7 @@ export default function Register() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
