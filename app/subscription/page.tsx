@@ -6,6 +6,8 @@ import { eq } from "drizzle-orm";
 import { createMollieClient } from "@mollie/api-client";
 import SubscriptionContent from "./SubscriptionContent";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Subscription",
   description:

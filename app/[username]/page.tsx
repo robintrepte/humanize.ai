@@ -10,6 +10,8 @@ interface UserProfileProps {
   params: Promise<{ username: string }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function UserProfile({ params }: UserProfileProps) {
   const session = await auth();
   const resolvedParams = await params;

@@ -5,6 +5,14 @@ import { db } from "@/lib/db";
 import { user, humanization } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { LIMITS, isHumanizeLevel } from "@/lib/validation";
+import {
+  calculateHumanizeCredits,
+  deductCreditsAtomic,
+} from "@/lib/credits";
+import {
+  checkAiRateLimit,
+  rateLimitExceededResponse,
+} from "@/lib/rate-limit";
 
 const aiClient = new AIClient({
   provider: process.env.AI_PROVIDER as "openai" | "anthropic",
@@ -98,9 +106,13 @@ const processParagraphs = async (
 
 export async function POST(req: Request) {
   try {
+    if (!checkAiRateLimit(req)) {
+      return rateLimitExceededResponse();
+    }
+
     const session = await auth();
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -110,7 +122,7 @@ export async function POST(req: Request) {
       language,
       generateTitle,
       currentTitle,
-      requiredCredits,
+      isRetry,
     } = await req.json();
 
     const textStr = typeof text === "string" ? text : "";
@@ -126,23 +138,26 @@ export async function POST(req: Request) {
     if (!isHumanizeLevel(level)) {
       return NextResponse.json({ error: "Invalid level" }, { status: 400 });
     }
-    const requiredCreditsNum = Number(requiredCredits);
-    if (!Number.isInteger(requiredCreditsNum) || requiredCreditsNum < 1 || requiredCreditsNum > 10000) {
-      return NextResponse.json({ error: "Invalid requiredCredits" }, { status: 400 });
-    }
     const langStr = typeof language === "string" ? language.trim().slice(0, 20) : "en";
 
-    const [u] = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, session.user.id))
-      .limit(1);
+    // Cost is always computed server-side. One free retry is allowed after a paid run.
+    const requiredCreditsNum = Boolean(isRetry)
+      ? 0
+      : calculateHumanizeCredits(textStr.length);
 
-    if (!u || u.credits < requiredCreditsNum) {
-      return NextResponse.json(
-        { error: "Insufficient credits" },
-        { status: 400 }
-      );
+    // Pre-check balance before spending on AI (final charge is still atomic below).
+    if (requiredCreditsNum > 0) {
+      const [balance] = await db
+        .select({ credits: user.credits })
+        .from(user)
+        .where(eq(user.id, session.user.id))
+        .limit(1);
+      if (!balance || balance.credits < requiredCreditsNum) {
+        return NextResponse.json(
+          { error: "Insufficient credits" },
+          { status: 402 }
+        );
+      }
     }
 
     const processedText = preprocessText(textStr);
@@ -158,6 +173,17 @@ export async function POST(req: Request) {
       langStr
     );
 
+    const remaining = await deductCreditsAtomic(
+      session.user.id,
+      requiredCreditsNum
+    );
+    if (remaining == null) {
+      return NextResponse.json(
+        { error: "Insufficient credits" },
+        { status: 402 }
+      );
+    }
+
     const [created] = await db
       .insert(humanization)
       .values({
@@ -166,7 +192,7 @@ export async function POST(req: Request) {
         outputText: humanizedText,
         language: langStr,
         level,
-        userId: u.id,
+        userId: session.user.id,
       })
       .returning();
 
@@ -177,15 +203,12 @@ export async function POST(req: Request) {
       );
     }
 
-    await db
-      .update(user)
-      .set({ credits: u.credits - requiredCredits })
-      .where(eq(user.id, session.user.id));
-
     return NextResponse.json({
       text: humanizedText,
       generatedTitle: finalTitle,
       humanizationId: created.id,
+      creditsUsed: requiredCreditsNum,
+      creditsRemaining: remaining,
     });
   } catch (error) {
     console.error("Error in humanize:", error);

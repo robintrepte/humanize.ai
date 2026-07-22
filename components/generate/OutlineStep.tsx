@@ -93,7 +93,7 @@ export function OutlineStep({ outline, onOutlineChange, onBack, onNext, isLoadin
     onOutlineChange(filterItems(outline))
   }, [outline, onOutlineChange])
 
-  const renderOutlineItem = useCallback((item: OutlineItem, depth = 0) => {
+  const renderOutlineItem = (item: OutlineItem, depth = 0): React.ReactNode => {
     const isExpanded = expandedItems.includes(item.id)
 
     return (
@@ -147,7 +147,7 @@ export function OutlineStep({ outline, onOutlineChange, onBack, onNext, isLoadin
         )}
       </div>
     )
-  }, [expandedItems, addItem, removeItem, updateItemTitle, toggleExpand])
+  }
 
   return (
     <div className="space-y-6">

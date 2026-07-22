@@ -11,6 +11,7 @@ import { ContentStep } from '@/components/generate/ContentStep'
 import { GenerationSettings, OutlineItem, GeneratedContent, GenerationStep } from '@/types/generate'
 import { useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { escapeHtml, sanitizeHtml } from '@/lib/sanitize'
 
 const STEPS = [
   { title: 'Settings', description: 'Configure your content' },
@@ -328,15 +329,15 @@ export default function GenerateContent() {
   // Add this helper function to format content as HTML
   const formatContentAsHtml = () => {
     const formattedContent = outline.map(item => {
-      const content = generatedContent.content[item.id] || '';
+      const content = sanitizeHtml(generatedContent.content[item.id] || '');
       return `
         <section>
-          <h2>${item.title}</h2>
+          <h2>${escapeHtml(item.title)}</h2>
           ${content}
           ${item.subItems?.map(subItem => `
             <section>
-              <h3>${subItem.title}</h3>
-              ${generatedContent.content[subItem.id] || ''}
+              <h3>${escapeHtml(subItem.title)}</h3>
+              ${sanitizeHtml(generatedContent.content[subItem.id] || '')}
             </section>
           `).join('') || ''}
         </section>
@@ -345,7 +346,7 @@ export default function GenerateContent() {
 
     return `
       <article>
-        <h1>${generatedContent.title || 'Untitled'}</h1>
+        <h1>${escapeHtml(generatedContent.title || 'Untitled')}</h1>
         ${formattedContent}
       </article>
     `;

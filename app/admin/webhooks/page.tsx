@@ -6,6 +6,8 @@ import { eq, desc } from "drizzle-orm";
 import WebhookList from "./WebhookList";
 import { History } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminWebhooksPage() {
   const session = await auth();
 

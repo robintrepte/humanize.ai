@@ -96,7 +96,19 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       message: "Profil erfolgreich aktualisiert",
-      user: updated,
+      user: {
+        id: updated.id,
+        username: updated.username,
+        name: updated.name,
+        email: updated.email,
+        image: updated.image,
+        role: updated.role,
+        public: updated.public,
+        credits: updated.credits,
+        subscriptionStatus: updated.subscriptionStatus,
+        currentPeriodEnd: updated.currentPeriodEnd,
+        planId: updated.planId,
+      },
     });
   } catch (error) {
     return NextResponse.json(

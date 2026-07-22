@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { toPublicUser } from "@/lib/safe-user";
 
 export async function PUT(req: Request) {
   try {
@@ -12,7 +13,16 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { userId, credits } = await req.json();
+    const body = await req.json();
+    const userId = Number(body.userId);
+    const credits = Number(body.credits);
+
+    if (!Number.isInteger(userId) || userId < 1) {
+      return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
+    }
+    if (!Number.isInteger(credits) || credits < 0 || credits > 10_000_000) {
+      return NextResponse.json({ error: "Invalid credits" }, { status: 400 });
+    }
 
     const [updated] = await db
       .update(user)
@@ -25,7 +35,7 @@ export async function PUT(req: Request) {
     }
     return NextResponse.json({
       message: "Credits updated successfully",
-      user: updated,
+      user: toPublicUser(updated),
     });
   } catch (error) {
     return NextResponse.json(

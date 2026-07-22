@@ -4,7 +4,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createMollieClient } from "@mollie/api-client";
 import { db } from "@/lib/db";
 import { user, webhookLog } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, like, sql } from "drizzle-orm";
 
 const mollieClient = createMollieClient({
   apiKey: process.env.MOLLIE_API_KEY!,
@@ -29,6 +29,11 @@ export async function POST(req: Request) {
   const signature = headersList.get("x-mollie-signature") ?? null;
   const webhookSecret = process.env.MOLLIE_WEBHOOK_SECRET;
 
+  if (process.env.NODE_ENV === "production" && !webhookSecret) {
+    console.error("MOLLIE_WEBHOOK_SECRET is required in production");
+    return NextResponse.json({ error: "Webhook misconfigured" }, { status: 500 });
+  }
+
   if (webhookSecret && !verifyMollieSignature(rawBody, signature, webhookSecret)) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
   }
@@ -40,6 +45,22 @@ export async function POST(req: Request) {
 
   if (!bodyText) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  }
+
+  // Idempotency: ignore already-processed payment/subscription ids
+  const [alreadyProcessed] = await db
+    .select({ id: webhookLog.id })
+    .from(webhookLog)
+    .where(
+      and(
+        eq(webhookLog.status, "success"),
+        like(webhookLog.payload, `%${bodyText.slice(0, 64)}%`)
+      )
+    )
+    .limit(1);
+
+  if (alreadyProcessed) {
+    return NextResponse.json({ received: true, duplicate: true });
   }
 
   try {
@@ -187,12 +208,6 @@ async function handleSubscriptionPayment(payment: {
         webhookUrl: `${process.env.NEXTAUTH_URL}/api/webhook`,
       });
 
-    const [u] = await db
-      .select({ credits: user.credits })
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-
     const nextPeriod = payment.paidAt
       ? new Date(
           new Date(payment.paidAt).setMonth(
@@ -204,7 +219,7 @@ async function handleSubscriptionPayment(payment: {
     await db
       .update(user)
       .set({
-        credits: (u?.credits ?? 0) + credits,
+        credits: sql`${user.credits} + ${credits}`,
         subscriptionId: subscription.id,
         subscriptionStatus: "active",
         planId,
@@ -216,12 +231,6 @@ async function handleSubscriptionPayment(payment: {
     const userId = parseInt(metadata?.userId ?? "0", 10);
     const credits = parseInt(metadata?.credits ?? "0", 10);
 
-    const [u] = await db
-      .select({ credits: user.credits })
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-
     const nextPeriod = payment.paidAt
       ? new Date(
           new Date(payment.paidAt).setMonth(
@@ -233,7 +242,7 @@ async function handleSubscriptionPayment(payment: {
     await db
       .update(user)
       .set({
-        credits: (u?.credits ?? 0) + credits,
+        credits: sql`${user.credits} + ${credits}`,
         currentPeriodEnd: nextPeriod,
       })
       .where(eq(user.id, userId));

@@ -4,6 +4,12 @@ import { AIClient } from "@/lib/ai-client";
 import { db } from "@/lib/db";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { OUTLINE_CREDITS, deductCreditsAtomic } from "@/lib/credits";
+import {
+  checkAiRateLimit,
+  rateLimitExceededResponse,
+} from "@/lib/rate-limit";
+import { LIMITS } from "@/lib/validation";
 
 const aiClient = new AIClient({
   provider: process.env.AI_PROVIDER as "openai" | "anthropic",
@@ -12,13 +18,15 @@ const aiClient = new AIClient({
   maxTokens: 2048,
 });
 
-const CREDITS_FOR_OUTLINE = 5;
-
 export async function POST(req: Request) {
   try {
+    if (!checkAiRateLimit(req)) {
+      return rateLimitExceededResponse();
+    }
+
     const session = await auth();
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -38,23 +46,44 @@ export async function POST(req: Request) {
       );
     }
 
+    const promptStr = String(settings.prompt);
+    if (promptStr.length > LIMITS.GENERATE_PROMPT_MAX_CHARS) {
+      return NextResponse.json(
+        {
+          error: `Prompt must be at most ${LIMITS.GENERATE_PROMPT_MAX_CHARS} characters`,
+        },
+        { status: 400 }
+      );
+    }
+
     const [u] = await db
       .select({ credits: user.credits })
       .from(user)
       .where(eq(user.id, session.user.id))
       .limit(1);
 
-    if (!u || u.credits < CREDITS_FOR_OUTLINE) {
+    if (!u || u.credits < OUTLINE_CREDITS) {
       return NextResponse.json(
         { error: "Insufficient credits" },
         { status: 402 }
       );
     }
 
-    const prompt = `Create a detailed outline for a ${settings.contentType} about ${settings.prompt}.
-                   The content should be in ${settings.language} language with a ${settings.tone} tone.
-                   Target length is ${settings.targetLength} words.
-                   Keywords to include: ${settings.keywords.join(", ")}
+    const contentType = String(settings.contentType).slice(0, 100);
+    const language = String(settings.language).slice(0, 20);
+    const tone = String(settings.tone).slice(0, 50);
+    const targetLength = String(settings.targetLength).slice(0, 20);
+    const keywords = Array.isArray(settings.keywords)
+      ? settings.keywords
+          .filter((k: unknown): k is string => typeof k === "string")
+          .slice(0, 20)
+          .map((k: string) => k.slice(0, 50))
+      : [];
+
+    const prompt = `Create a detailed outline for a ${contentType} about ${promptStr.slice(0, LIMITS.GENERATE_PROMPT_MAX_CHARS)}.
+                   The content should be in ${language} language with a ${tone} tone.
+                   Target length is ${targetLength} words.
+                   Keywords to include: ${keywords.join(", ")}
                    
                    Return the outline as a JSON array of sections, where each section object has exactly two fields:
                    - "title": string
@@ -113,15 +142,21 @@ export async function POST(req: Request) {
       );
     }
 
-    await db
-      .update(user)
-      .set({ credits: u.credits - CREDITS_FOR_OUTLINE })
-      .where(eq(user.id, session.user.id));
+    const remaining = await deductCreditsAtomic(
+      session.user.id,
+      OUTLINE_CREDITS
+    );
+    if (remaining == null) {
+      return NextResponse.json(
+        { error: "Insufficient credits" },
+        { status: 402 }
+      );
+    }
 
     return NextResponse.json({
       outline,
-      creditsUsed: CREDITS_FOR_OUTLINE,
-      creditsRemaining: u.credits - CREDITS_FOR_OUTLINE,
+      creditsUsed: OUTLINE_CREDITS,
+      creditsRemaining: remaining,
     });
   } catch (error) {
     console.error("Outline generation error:", error);

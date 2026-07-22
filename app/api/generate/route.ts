@@ -5,6 +5,11 @@ import { db } from "@/lib/db";
 import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { LIMITS } from "@/lib/validation";
+import { GENERATE_CREDITS, deductCreditsAtomic } from "@/lib/credits";
+import {
+  checkAiRateLimit,
+  rateLimitExceededResponse,
+} from "@/lib/rate-limit";
 
 const aiClient = new AIClient({
   provider: process.env.AI_PROVIDER as "openai" | "anthropic",
@@ -15,13 +20,17 @@ const aiClient = new AIClient({
 
 export async function POST(req: Request) {
   try {
+    if (!checkAiRateLimit(req)) {
+      return rateLimitExceededResponse();
+    }
+
     const session = await auth();
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { prompt, contentType, tone, requiredCredits } = await req.json();
+    const { prompt, contentType, tone } = await req.json();
 
     const promptStr = typeof prompt === "string" ? prompt : "";
     if (!promptStr.trim()) {
@@ -33,26 +42,24 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    const requiredCreditsNum = Number(requiredCredits);
-    if (!Number.isInteger(requiredCreditsNum) || requiredCreditsNum < 1 || requiredCreditsNum > 10000) {
-      return NextResponse.json({ error: "Invalid requiredCredits" }, { status: 400 });
-    }
 
-    const [u] = await db
-      .select()
+    const [balance] = await db
+      .select({ credits: user.credits })
       .from(user)
       .where(eq(user.id, session.user.id))
       .limit(1);
 
-    if (!u || u.credits < requiredCreditsNum) {
+    if (!balance || balance.credits < GENERATE_CREDITS) {
       return NextResponse.json(
         { error: "Insufficient credits" },
-        { status: 400 }
+        { status: 402 }
       );
     }
 
-    const contentTypeStr = typeof contentType === "string" ? contentType.slice(0, 100) : "content";
-    const toneStr = typeof tone === "string" ? tone.slice(0, 50) : "professional";
+    const contentTypeStr =
+      typeof contentType === "string" ? contentType.slice(0, 100) : "content";
+    const toneStr =
+      typeof tone === "string" ? tone.slice(0, 50) : "professional";
     const systemPrompt = `You are a professional content writer. Generate ${contentTypeStr} content with a ${toneStr} tone. 
     The content should be well-structured, engaging, and optimized for the specific content type.
     Ensure the output is natural and human-like.`;
@@ -62,12 +69,22 @@ export async function POST(req: Request) {
       { role: "user", content: promptStr },
     ]);
 
-    await db
-      .update(user)
-      .set({ credits: u.credits - requiredCreditsNum })
-      .where(eq(user.id, session.user.id));
+    const remaining = await deductCreditsAtomic(
+      session.user.id,
+      GENERATE_CREDITS
+    );
+    if (remaining == null) {
+      return NextResponse.json(
+        { error: "Insufficient credits" },
+        { status: 402 }
+      );
+    }
 
-    return NextResponse.json({ text: result });
+    return NextResponse.json({
+      text: result,
+      creditsUsed: GENERATE_CREDITS,
+      creditsRemaining: remaining,
+    });
   } catch (error) {
     console.error("Error in generate:", error);
     return NextResponse.json(

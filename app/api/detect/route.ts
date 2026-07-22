@@ -4,8 +4,16 @@ import { db } from "@/lib/db";
 import { humanization } from "@/db/schema";
 import { like } from "drizzle-orm";
 import { LIMITS, escapeLikePattern } from "@/lib/validation";
+import {
+  checkAiRateLimit,
+  rateLimitExceededResponse,
+} from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
+  if (!checkAiRateLimit(req)) {
+    return rateLimitExceededResponse();
+  }
+
   const session = await auth();
 
   if (!session) {

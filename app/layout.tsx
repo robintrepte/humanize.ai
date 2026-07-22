@@ -13,7 +13,12 @@ const defaultDescription =
   "Transform AI-generated text into natural, human-like writing. Bypass AI detectors (GPTZero, ZeroGPT, Turnitin) with our advanced humanizer. Multiple languages and writing levels. Free credits to start.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL ?? process.env.NEXT_PUBLIC_DOMAIN ?? "http://localhost:3003"),
+  metadataBase: new URL(
+    process.env.NEXTAUTH_URL ??
+      (process.env.NEXT_PUBLIC_DOMAIN?.startsWith("http")
+        ? process.env.NEXT_PUBLIC_DOMAIN
+        : `http://${process.env.NEXT_PUBLIC_DOMAIN ?? "localhost:3003"}`)
+  ),
   title: {
     default: defaultTitle,
     template: `%s | ${siteName}`,

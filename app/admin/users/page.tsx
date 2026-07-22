@@ -6,6 +6,8 @@ import { eq, asc } from "drizzle-orm";
 import UserList from "./UserList";
 import { Sparkles } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminUsersPage() {
   const session = await auth();
 
@@ -25,17 +27,25 @@ export default async function AdminUsersPage() {
 
   const usersWithPlans = await db
     .select({
-      user: user,
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+      role: user.role,
+      public: user.public,
+      credits: user.credits,
+      currentPeriodEnd: user.currentPeriodEnd,
+      planId: user.planId,
+      subscriptionId: user.subscriptionId,
+      subscriptionStatus: user.subscriptionStatus,
       plan: plan,
     })
     .from(user)
     .leftJoin(plan, eq(user.planId, plan.id))
     .orderBy(asc(user.id));
 
-  const users = usersWithPlans.map((row) => ({
-    ...row.user,
-    plan: row.plan,
-  }));
+  const users = usersWithPlans;
 
   return (
     <div className="flex flex-col min-h-screen">

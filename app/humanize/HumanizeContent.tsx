@@ -155,6 +155,7 @@ export default function HumanizeContent() {
     }
 
     const requiredCredits = hasBeenHumanized && retryAvailable ? 0 : calculateRequiredCredits();
+    const isRetry = hasBeenHumanized && retryAvailable;
     
     if (requiredCredits > (session.user.credits || 0)) {
       setError('Not enough credits. Please purchase more credits to continue.');
@@ -175,7 +176,7 @@ export default function HumanizeContent() {
           language,
           generateTitle: !title,
           currentTitle: title,
-          requiredCredits
+          isRetry,
         }),
       });
 

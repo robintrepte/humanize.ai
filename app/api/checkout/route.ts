@@ -4,9 +4,14 @@ import { createMollieClient, SequenceType } from "@mollie/api-client";
 import { db } from "@/lib/db";
 import { plan } from "@/db/schema";
 import { and, eq, sql } from "drizzle-orm";
+import {
+  checkCheckoutRateLimit,
+  rateLimitExceededResponse,
+} from "@/lib/rate-limit";
+import { getRequiredEnv } from "@/lib/env";
 
 const mollieClient = createMollieClient({
-  apiKey: process.env.MOLLIE_API_KEY!,
+  apiKey: process.env.MOLLIE_API_KEY || "test_missing",
 });
 
 interface CustomerMetadata {
@@ -15,6 +20,12 @@ interface CustomerMetadata {
 
 export async function POST(req: Request) {
   try {
+    if (!checkCheckoutRateLimit(req)) {
+      return rateLimitExceededResponse();
+    }
+
+    getRequiredEnv("MOLLIE_API_KEY");
+
     const session = await auth();
 
     if (!session?.user) {

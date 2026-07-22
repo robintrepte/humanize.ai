@@ -5,6 +5,7 @@ import { Loader2, Check } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
 import React from 'react'
+import { escapeHtml, sanitizeHtml } from '@/lib/sanitize'
 
 interface ContentStepProps {
   outline: OutlineItem[];
@@ -162,10 +163,10 @@ export function ContentStep({
         'text-lg mb-2'
       }`;
       
-      let content = `<div class="${headerStyle}">${item.title}</div>\n\n`;
+      let content = `<div class="${headerStyle}">${escapeHtml(item.title)}</div>\n\n`;
       
       if (item.id && generatedContent.content[item.id]) {
-        content += `<div class="mb-6">${generatedContent.content[item.id]}</div>\n\n`;
+        content += `<div class="mb-6">${sanitizeHtml(generatedContent.content[item.id])}</div>\n\n`;
       } else if (currentGeneratingId === item.id) {
         content += `<div class="mb-6 text-muted-foreground">Generating content...</div>\n\n`;
       } else {
